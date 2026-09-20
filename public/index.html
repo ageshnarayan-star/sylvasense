@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SylvaSense (ORION-PS-03) | Forest-Carbon Monitoring Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            forest: { 50: '#f0fdf4', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b', 950: '#022c22' },
+            sar: { 400: '#38bdf8', 500: '#0ea5e9', 900: '#0c4a6e' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- Top App Bar -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30">
+          🌲
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
+              SylvaSense
+              <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40">ORION-PS-03</span>
+            </h1>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Tree Enumeration & Biomass Estimation from Multi-Spectral & SAR Satellite Imagery</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-medium hidden md:inline">AOI Region:</span>
+        <select id="region-selector" class="bg-slate-800/90 text-xs font-medium text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition cursor-pointer">
+          <option value="western-ghats">Western Ghats (Agumbe, India)</option>
+          <option value="amazon-para">Pará Basin (Amazon, Brazil)</option>
+          <option value="congo-lope">Lopé National Park (Gabon)</option>
+          <option value="black-forest">Black Forest (Germany)</option>
+          <option value="cascadia-olympic">Olympic Peninsula (USA)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden lg:flex items-center gap-2 text-[11px] bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/60">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300 font-mono">Sentinel-1/2 Dual-Stream</span>
+        </div>
+        <button id="btn-print-pdf" class="hidden sm:flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow transition">
+          <span>📄</span> Export Report
+        </button>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-1 border-t border-slate-800/60 text-xs font-medium no-print">
+      <button data-tab="dashboard" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-emerald-500 text-emerald-400 bg-slate-800/80 transition whitespace-nowrap">
+        🗺️ 01 Dashboard & GIS Map
+      </button>
+      <button data-tab="workflow" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        ⚙️ 02 Seven-Step Workflow
+      </button>
+      <button data-tab="architecture" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        🧠 03 AI Model & Limitations
+      </button>
+      <button data-tab="review" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        👤 04 Human Review Layer
+      </button>
+      <button data-tab="export" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        📑 05 Evidence Report
+      </button>
+      <button data-tab="scalability" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        💼 06 Business & Scalability
+      </button>
+      <button data-tab="references" class="nav-tab-btn py-2.5 px-3.5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        📚 07 Research & Citations
+      </button>
+    </div>
+  </header>
+
+  <div id="pipeline-status-banner" class="hidden bg-emerald-950/80 border-b border-emerald-500/40 px-4 py-2 text-center text-xs text-emerald-300 font-mono">
+    Executing 9-layer feature fusion pipeline...
+  </div>
+  <div id="sar-saturation-banner" class="hidden bg-amber-950/90 border-b border-amber-600/50 px-4 py-2 text-center text-xs text-amber-200 font-medium">
+    ⚠️ <b>Scientific Notice (Slide 3 & 4):</b> C-band SAR backscatter experiences saturation in dense canopy (>275 Mg/ha). Uncertainty intervals [P10-P90] have been automatically widened.
+  </div>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- TAB 1: DASHBOARD & GIS MAP -->
+    <section id="view-dashboard" class="tab-view-panel space-y-6">
+
+      <!-- Active Region Header Bar -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 id="active-region-name" class="text-lg font-bold text-white">Western Ghats (Agumbe Rainforest)</h2>
+          <p id="active-region-biome" class="text-xs text-slate-400">India · Tropical Moist Deciduous & Evergreen</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block uppercase">Review Sign-Off</span>
+            <span id="kpi-review-badge" class="px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+              APPROVED
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>🌿</span> Biomass Density</span>
+          <div class="my-1"><span id="kpi-biomass" class="text-lg font-extrabold text-emerald-400">241.8 Mg/ha</span></div>
+          <span id="kpi-biomass-bounds" class="text-[10px] font-mono text-slate-400">[P10: 218.4 - P90: 268.2]</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>💎</span> Carbon Stock</span>
+          <div class="my-1"><span id="kpi-carbon" class="text-lg font-extrabold text-white">5.19M tCO₂e</span></div>
+          <span id="kpi-biomass-tonnes" class="text-[10px] text-slate-400">3,010 kt dry biomass</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>🌲</span> Stand Density</span>
+          <div class="my-1"><span id="kpi-density" class="text-lg font-extrabold text-sky-400">84.6%</span></div>
+          <span id="kpi-stems" class="text-[10px] text-slate-400">~480 stems/ha proxy</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>🚨</span> Forest Loss</span>
+          <div class="my-1"><span id="kpi-forest-loss" class="text-lg font-extrabold text-red-400">34.2 ha</span></div>
+          <span id="kpi-forest-loss-desc" class="text-[10px] text-slate-400">89.6 ha degraded</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>☁️</span> SAR Penetration</span>
+          <div class="my-1"><span id="kpi-cloud-gap" class="text-lg font-extrabold text-emerald-400">99.4%</span></div>
+          <span id="kpi-cloud-area" class="text-[10px] text-slate-400">1,768 ha gap filled</span>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span>🎯</span> Quality Score</span>
+          <div class="my-1"><span id="kpi-quality-score" class="text-lg font-extrabold text-teal-300">92/100</span></div>
+          <span class="text-[10px] text-slate-400">RMSE: 0.28 pixel</span>
+        </div>
+      </div>
+
+      <!-- Main GIS Map View & Split Screen Controller -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left 2 Cols: Interactive Map -->
+        <div class="lg:col-span-2 flex flex-col bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+          <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400 font-semibold mr-1">Layer:</span>
+              <button data-layer="biomass" class="map-layer-btn active-layer bg-emerald-600 text-white px-2.5 py-1 rounded font-medium transition">
+                Biomass Heatmap
+              </button>
+              <button data-layer="density" class="map-layer-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-2.5 py-1 rounded font-medium transition">
+                Stand Density
+              </button>
+              <button data-layer="cloudgap" class="map-layer-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-2.5 py-1 rounded font-medium transition">
+                SAR Cloud Gap
+              </button>
+              <button data-layer="none" class="map-layer-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-2.5 py-1 rounded font-medium transition">
+                Base Satellite
+              </button>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+              <input type="checkbox" id="toggle-alerts-checkbox" checked class="rounded border-slate-700 text-red-500 focus:ring-red-500 bg-slate-800">
+              <span class="font-medium">Deforestation Alerts</span>
+            </label>
+          </div>
+
+          <!-- Split Screen Swipe Bar (Slide 4) -->
+          <div class="px-4 py-2 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-3 text-[11px]">
+            <div class="flex items-center gap-1.5 font-semibold text-sky-400">
+              <span>📡</span> Sentinel-1 SAR (Radar Backscatter)
+            </div>
+            <div class="flex-1 max-w-xs flex items-center gap-2">
+              <span class="text-slate-500 text-[10px]">SAR</span>
+              <input type="range" id="split-swipe-slider" min="0" max="100" value="50" class="w-full accent-sky-400 cursor-pointer">
+              <span class="text-slate-500 text-[10px]">Optical</span>
+            </div>
+            <div class="flex items-center gap-1.5 font-semibold text-emerald-400">
+              <span>🛰️</span> Sentinel-2 (Optical RGB / NDVI)
+            </div>
+          </div>
+
+          <!-- Map Container -->
+          <div class="split-map-wrapper relative h-[460px] w-full">
+            <div id="map" class="h-full w-full"></div>
+            <div id="split-sar-overlay" class="split-sar-layer"></div>
+            <div id="split-divider-line" class="split-divider">
+              <div class="split-divider-handle">⇹</div>
+            </div>
+          </div>
+
+          <!-- Map Legend Bar -->
+          <div class="p-3 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-slate-300">Biomass Density:</span>
+              <div class="flex items-center gap-1 font-mono text-[10px]">
+                <span class="w-3 h-3 rounded bg-[#fef08a]"></span> 50
+                <span class="w-3 h-3 rounded bg-[#34d399] ml-1"></span> 150
+                <span class="w-3 h-3 rounded bg-[#10b981] ml-1"></span> 220
+                <span class="w-3 h-3 rounded bg-[#047857] ml-1"></span> 300+ Mg/ha
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Deforestation</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Degradation</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Regrowth</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 1 Col: Disturbance Alerts -->
+        <div class="space-y-6">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-xl">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <span>🚨</span> Disturbance Alerts (T1 vs T2)
+              </h3>
+              <span class="text-xs text-slate-400 font-mono">Bi-Temporal Filter</span>
+            </div>
+            <div class="overflow-x-auto max-h-[200px] overflow-y-auto">
+              <table class="w-full text-left">
+                <thead class="bg-slate-950/60 text-[11px] text-slate-400 uppercase font-semibold">
+                  <tr>
+                    <th class="py-2 px-3">ID</th>
+                    <th class="py-2 px-3">Type</th>
+                    <th class="py-2 px-3">Area</th>
+                    <th class="py-2 px-3">Cause</th>
+                    <th class="py-2 px-3 text-right">Conf</th>
+                  </tr>
+                </thead>
+                <tbody id="alerts-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-xl text-xs space-y-3">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <span>🔬</span> Multi-Sensor Calibration
+            </h3>
+            <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>NASA GEDI Reference:</span>
+                <span class="font-bold text-emerald-400">L4A / L4B Gridded</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Validation Error:</span>
+                <span class="text-slate-200">±28.4 Mg/ha</span>
+              </div>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>SAR Feature Weights:</span>
+                <span class="font-bold text-sky-400">55% Radar / 45% Optical</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Speckle Reduction:</span>
+                <span class="text-slate-200">Refined Lee 7x7 filter</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- TAB 2: SEVEN-STEP WORKFLOW -->
+    <section id="view-workflow" class="tab-view-panel hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <span>⚙️</span> Seven-Step End-to-End Operational Workflow
+        </h2>
+        <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
+          SylvaSense operationalizes remote-sensing forest intelligence through a 7-step pipeline designed to streamline MRV workflows, reduce uncertainties, and provide audit-grade evidence for carbon project developers and validation bodies.
+        </p>
+      </div>
+
+      <div id="workflow-steps-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
+
+    <!-- TAB 3: AI MODEL ARCHITECTURE & HONEST LIMITATIONS -->
+    <section id="view-architecture" class="tab-view-panel hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <span>🧠</span> AI Dual-Branch Feature Fusion Architecture
+        </h2>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed max-w-3xl">
+          Feature-level fusion combines optical and radar representations inside the model rather than simply averaging two separate predictions — improving robustness under cloud cover and in structurally complex forests.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+          <div class="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-4">
+            <div class="text-emerald-400 font-bold mb-2">🛰️ Branch 1: Optical Encoder</div>
+            <p class="text-slate-400 text-[11px] mb-3">Processes Sentinel-2 reflectance, vegetation indices (NDVI, EVI, NDRE), and canopy condition.</p>
+            <div class="space-y-1 text-[11px] font-mono text-slate-300 bg-slate-900 p-2 rounded">
+              <div>• B2, B3, B4 (RGB Bands)</div>
+              <div>• B8 NIR & B11 SWIR</div>
+              <div>• NDVI, EVI, NDRE Indices</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/80 border border-sky-500/30 rounded-xl p-4">
+            <div class="text-sky-400 font-bold mb-2">📡 Branch 2: SAR Encoder</div>
+            <p class="text-slate-400 text-[11px] mb-3">Processes Sentinel-1 C-band backscatter, polarization ratios (VH/VV), and temporal structural change.</p>
+            <div class="space-y-1 text-[11px] font-mono text-slate-300 bg-slate-900 p-2 rounded">
+              <div>• C-band VV & VH (dB)</div>
+              <div>• Polarization Ratio VH/VV</div>
+              <div>• RFDI Degradation Metric</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/80 border border-purple-500/30 rounded-xl p-4">
+            <div class="text-purple-400 font-bold mb-2">⚡ Fusion Layer</div>
+            <p class="text-slate-400 text-[11px] mb-3">Combines learned representations from both branches into a joint latent feature space.</p>
+            <div class="space-y-1 text-[11px] font-mono text-slate-300 bg-slate-900 p-2 rounded">
+              <div>• Dynamic Cloud Weighting</div>
+              <div>• Cross-Modal Embeddings</div>
+              <div>• Joint Feature Tensor</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/80 border border-teal-500/30 rounded-xl p-4">
+            <div class="text-teal-400 font-bold mb-2">🎯 Prediction Heads</div>
+            <p class="text-slate-400 text-[11px] mb-3">Dedicated heads outputting above-ground biomass, forest density proxy, and uncertainty intervals.</p>
+            <div class="space-y-1 text-[11px] font-mono text-slate-300 bg-slate-900 p-2 rounded">
+              <div>• AGBD (Mg/ha & tCO₂e)</div>
+              <div>• Stand Density Proxy</div>
+              <div>• [P10, P50, P90] Bounds</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Honest Limitations Matrix (Slide 3 & 4) -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <span>⚖️</span> Honest Scientific Limitations & Operational Boundaries
+        </h3>
+        <p class="text-xs text-slate-400 mb-5 leading-relaxed">
+          As outlined in the core system principles, SylvaSense maintains explicit uncertainty transparency and does not make unsubstantiated claims.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-1.5"><span class="text-amber-400">⚠️</span> Reference Data Quality (GEDI)</h4>
+            <p class="text-slate-400 leading-relaxed">NASA GEDI is sampled waveform LiDAR, serving as calibration reference rather than wall-to-wall ground truth. Accuracy depends on coverage in the target area.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-1.5"><span class="text-amber-400">⚠️</span> Dense High-Biomass Saturation</h4>
+            <p class="text-slate-400 leading-relaxed">Radar-based biomass estimation can saturate in very dense tropical forests (>275-300 Mg/ha) — uncertainty intervals are appropriately wider in these conditions.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-1.5"><span class="text-amber-400">⚠️</span> Stand-Level Density vs Tree Counting</h4>
+            <p class="text-slate-400 leading-relaxed">Sentinel-1 and Sentinel-2 at 10-meter resolution are not sufficient for reliable individual-tree enumeration. MVP presents stand-level density proxies.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-1.5"><span class="text-amber-400">⚠️</span> Field Validation</h4>
+            <p class="text-slate-400 leading-relaxed">Field measurements remain important for local calibration and independent verification. SylvaSense reduces — but does not eliminate — the need for ground surveys.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- TAB 4: HUMAN REVIEW LAYER -->
+    <section id="view-review" class="tab-view-panel hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <span>👤</span> Human-in-the-Loop Review Console (Slide 5 Layer 7)
+        </h2>
+        <p class="text-xs text-slate-400 leading-relaxed max-w-3xl mb-6">
+          Every output undergoes human inspection before being finalized. Reviewers inspect high-uncertainty parcels, verify sudden change alerts against optical/SAR reference imagery, log auditor notes, and sign off with a tamper-evident SHA-256 audit hash.
+        </p>
+
+        <form id="human-review-form" class="space-y-4 max-w-2xl bg-slate-950/80 p-6 rounded-xl border border-slate-800">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Auditor / Reviewer Full Name:</label>
+            <input type="text" id="reviewer-name-input" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Review Decision Status:</label>
+            <select id="reviewer-status-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+              <option value="APPROVED">APPROVED (Verified against Sentinel-1/2 & GEDI)</option>
+              <option value="REVISED_OUTPUT">REVISED_OUTPUT (Calibrated with local field offset)</option>
+              <option value="FLAGGED_FOR_INSPECTION">FLAGGED_FOR_INSPECTION (Ground truth survey required)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Auditor Review Comments & Evidence Notes:</label>
+            <textarea id="reviewer-notes-input" rows="4" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium leading-relaxed"></textarea>
+          </div>
+
+          <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-400">
+            <span class="text-slate-500 block mb-1">Current Cryptographic Audit Hash:</span>
+            <span id="audit-hash-display" class="text-emerald-400 break-all font-semibold">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <span id="review-toast" class="hidden text-xs text-emerald-400 font-semibold animate-pulse">✓ Review entry signed and recorded to audit trail!</span>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow-lg transition flex items-center gap-1.5 ml-auto">
+              <span>✍️</span> Sign & Finalize Review
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 5: EVIDENCE REPORT -->
+    <section id="view-export" class="tab-view-panel hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 no-print bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        <div>
+          <h2 class="text-base font-bold text-white">Verification Evidence Export</h2>
+          <p class="text-xs text-slate-400">Download audit packages for VVBs, project developers, or registries</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-download-json" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+            <span>📦</span> Download JSON
+          </button>
+          <button id="btn-download-geojson" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+            <span>🗺️</span> Download GeoJSON
+          </button>
+          <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+            <span>🖨️</span> Print / Save as PDF
+          </button>
+        </div>
+      </div>
+
+      <div id="evidence-report-view"></div>
+    </section>
+
+    <!-- TAB 6: BUSINESS VIABILITY & SCALABILITY -->
+    <section id="view-scalability" class="tab-view-panel hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <span>💰</span> Business Viability & Revenue Model (Slide 4)
+        </h2>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed max-w-3xl">
+          SylvaSense monetizes via a hybrid SaaS and per-verification revenue model targeting forest-carbon developers, VVBs, and corporate buyers.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-slate-950/80 p-6 rounded-xl border border-slate-800">
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs font-medium text-slate-300 mb-1">
+                <span>Monitored Area (Hectares):</span>
+                <span id="calc-hectares-display" class="font-bold text-emerald-400">25,000 ha</span>
+              </div>
+              <input type="range" id="calc-hectares" min="5000" max="250000" step="5000" value="25000" class="w-full accent-emerald-500">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-medium text-slate-300 mb-1">
+                <span>Verification Reports Per Year:</span>
+                <span id="calc-reports-display" class="font-bold text-sky-400">4 reports/yr</span>
+              </div>
+              <input type="range" id="calc-reports" min="1" max="24" step="1" value="4" class="w-full accent-sky-400">
+            </div>
+
+            <div class="text-[11px] text-slate-400 space-y-1 pt-2">
+              <div>• <b>Subscription Rate:</b> $0.25 / hectare / year ongoing monitoring</div>
+              <div>• <b>Report Pricing:</b> $1,800 per audit-ready evidence package</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-5 rounded-lg border border-slate-800 text-xs space-y-3">
+            <h4 class="font-bold text-white text-sm">Projected Annual Revenue</h4>
+            <div class="flex justify-between text-slate-300 pb-2 border-b border-slate-800">
+              <span>Subscription Monitoring:</span>
+              <span id="calc-sub-rev" class="font-bold text-emerald-400">$6,250/yr</span>
+            </div>
+            <div class="flex justify-between text-slate-300 pb-2 border-b border-slate-800">
+              <span>Verification Reports:</span>
+              <span id="calc-report-rev" class="font-bold text-sky-400">$7,200/yr</span>
+            </div>
+            <div class="flex justify-between text-white text-sm font-black pt-1">
+              <span>Total Estimated Revenue:</span>
+              <span id="calc-total-rev" class="text-emerald-300">$13,450/yr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <span>🚀</span> Scalability Pathways (Slide 7)
+        </h3>
+        <p class="text-xs text-slate-400 mb-5 leading-relaxed max-w-3xl">
+          The core workflow — Sentinel-1 + Sentinel-2 + AI fusion + uncertainty quantification + human review — is extensible to any land-cover monitoring application.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 text-xs">
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <div class="text-emerald-400 font-bold mb-1">🌱 Agroforestry</div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">Monitoring shade-tree canopies in coffee and cocoa plantations with dual-sensor indices.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <div class="text-sky-400 font-bold mb-1">🌲 Forest Restoration</div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">Tracking multi-year biomass accumulation in reforested and naturally regenerating land.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <div class="text-red-400 font-bold mb-1">🚨 Illegal Logging</div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">Near-real-time radar alerts identifying emerging logging roads through persistent cloud cover.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <div class="text-amber-400 font-bold mb-1">🔥 Fire Impact</div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">Post-wildfire burn severity mapping and structural canopy loss assessment.</p>
+          </div>
+          <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800">
+            <div class="text-teal-400 font-bold mb-1">🐾 Habitat Monitoring</div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">Longitudinal corridor connectivity tracking for biodiversity conservation zones.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: RESEARCH & CITATIONS -->
+    <section id="view-references" class="tab-view-panel hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <span>📚</span> Research & Scientific References (Slide 8)
+        </h2>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed max-w-3xl">
+          The following peer-reviewed literature, agency standards, and space mission specifications establish the scientific and MRV foundation of SylvaSense.
+        </p>
+        <div class="overflow-x-auto bg-slate-950/80 rounded-xl border border-slate-800">
+          <table class="w-full text-left">
+            <thead class="bg-slate-900 text-[11px] text-slate-400 uppercase font-semibold border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">#</th>
+                <th class="py-3 px-4">Title / Publication</th>
+                <th class="py-3 px-4">Organization</th>
+                <th class="py-3 px-4">Scientific Summary</th>
+              </tr>
+            </thead>
+            <tbody id="references-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900/80 border-t border-slate-800 py-6 text-xs text-slate-500 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <span class="font-bold text-slate-400">SylvaSense</span> · ORION-PS-03 Forest-Carbon Monitoring Platform
+        <p class="text-[11px] text-slate-600 mt-0.5">Making forest-carbon claims easier to measure, monitor, and verify.</p>
+      </div>
+      <div class="text-right font-mono text-[11px] text-slate-500">
+        Copernicus Sentinel-1/2 · NASA GEDI · UNFCCC REDD+ MRV
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/benchmark_data.js"></script>
+  <script src="js/ai_model.js"></script>
+  <script src="js/change_detection.js"></script>
+  <script src="js/human_review.js"></script>
+  <script src="js/export_report.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
