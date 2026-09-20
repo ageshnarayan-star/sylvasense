@@ -182,30 +182,31 @@ async function requestHandler(req, res) {
     return sendJSON(404, { error: 'Endpoint not found' });
   }
 
-  // Static File Serving
-  let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
-  const extname = path.extname(filePath).toLowerCase();
+  // Static File Serving (checks root and public directory)
+  const relPath = (pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, ''));
+  let filePath = path.join(__dirname, relPath);
 
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      // Fallback to index.html for SPA routing
-      filePath = path.join(PUBLIC_DIR, 'index.html');
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(PUBLIC_DIR, relPath);
+  }
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(__dirname, 'index.html');
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  fs.readFile(filePath, (readErr, content) => {
+    if (readErr) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404 Not Found');
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
     }
-
-    const contentType = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-    fs.readFile(filePath, (readErr, content) => {
-      if (readErr) {
-        res.writeHead(500);
-        res.end('500 Internal Server Error');
-      } else {
-        res.writeHead(200, { 'Content-Type': contentType });
-        res.end(content);
-      }
-    });
   });
 }
 
-// Start Server if run directly
 if (require.main === module) {
   const server = http.createServer(requestHandler);
   server.listen(PORT, () => {
