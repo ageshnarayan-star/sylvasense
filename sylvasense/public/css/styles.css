@@ -1,0 +1,149 @@
+/* SylvaSense (ORION-PS-03) Stylesheet */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-glow: rgba(16, 185, 129, 0.15);
+  --sar-hue: #38bdf8;
+  --optical-hue: #10b981;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #030712;
+  color: #f3f4f6;
+  overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet Customizations */
+.leaflet-container {
+  background-color: #050811 !important;
+  font-family: inherit;
+}
+
+.sylva-leaflet-popup .leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.sylva-leaflet-popup .leaflet-popup-tip {
+  background: #0f172a !important;
+  border-top: 1px solid #334155 !important;
+}
+
+/* Split Swipe Map View Controller */
+.split-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.split-sar-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 400;
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  background: radial-gradient(circle at 30% 40%, rgba(56, 189, 248, 0.15) 0%, rgba(3, 105, 161, 0.35) 70%);
+  mix-blend-mode: screen;
+  transition: clip-path 0.05s linear;
+}
+
+.split-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  background: #38bdf8;
+  z-index: 450;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 12px #0284c7;
+}
+
+.split-divider-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  font-size: 14px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.split-slider-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: ew-resize;
+  z-index: 500;
+  margin: 0;
+  padding: 0;
+}
+
+/* Print Styles for Verification Reports */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header, nav, #pipeline-status-banner, .no-print {
+    display: none !important;
+  }
+
+  .printable-report {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .printable-report * {
+    color: #111827 !important;
+    background: transparent !important;
+    border-color: #d1d5db !important;
+  }
+}
