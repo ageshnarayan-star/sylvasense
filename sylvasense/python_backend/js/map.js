@@ -39,11 +39,17 @@ class SylvaSenseMap {
       prefix: '<span class="text-xs text-emerald-400 font-mono">SylvaSense GIS Engine | Sentinel-1 & 2</span>'
     }).addTo(this.map);
 
-    // Base Layer: ESRI Satellite High Resolution
+    // Base Layer: OpenStreetMap (Guaranteed global availability & fast rendering)
+    this.baseLayers.osm = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 19, attribution: '&copy; OpenStreetMap | SylvaSense' }
+    ).addTo(this.map);
+
+    // Satellite Layer: ESRI World Imagery
     this.baseLayers.satellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 18, maxNativeZoom: 18 }
-    ).addTo(this.map);
+      { maxZoom: 18 }
+    );
 
     // Dark carto layer for high-contrast thematic views
     this.baseLayers.dark = L.tileLayer(
@@ -59,6 +65,9 @@ class SylvaSenseMap {
     if (regionData) {
       this.loadRegion(regionData);
     }
+
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 150);
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 600);
   }
 
   loadRegion(regionData) {
@@ -272,3 +281,10 @@ class SylvaSenseMap {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SylvaSenseMap;
 }
+
+
+window.addEventListener('resize', () => {
+  if (window.sylvaApp && window.sylvaApp.mapEngine && window.sylvaApp.mapEngine.map) {
+    window.sylvaApp.mapEngine.map.invalidateSize();
+  }
+});

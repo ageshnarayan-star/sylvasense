@@ -20,7 +20,167 @@
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+/* SylvaSense (ORION-PS-03) Stylesheet */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-glow: rgba(16, 185, 129, 0.15);
+  --sar-hue: #38bdf8;
+  --optical-hue: #10b981;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #030712;
+  color: #f3f4f6;
+  overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet Customizations */
+.leaflet-container {
+  background-color: #050811 !important;
+  font-family: inherit;
+}
+
+.sylva-leaflet-popup .leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.sylva-leaflet-popup .leaflet-popup-tip {
+  background: #0f172a !important;
+  border-top: 1px solid #334155 !important;
+}
+
+/* Split Swipe Map View Controller */
+.split-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.split-sar-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 400;
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  background: radial-gradient(circle at 30% 40%, rgba(56, 189, 248, 0.15) 0%, rgba(3, 105, 161, 0.35) 70%);
+  mix-blend-mode: screen;
+  transition: clip-path 0.05s linear;
+}
+
+.split-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  background: #38bdf8;
+  z-index: 450;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 12px #0284c7;
+}
+
+.split-divider-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  font-size: 14px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.split-slider-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: ew-resize;
+  z-index: 500;
+  margin: 0;
+  padding: 0;
+}
+
+/* Print Styles for Verification Reports */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header, nav, #pipeline-status-banner, .no-print {
+    display: none !important;
+  }
+
+  .printable-report {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .printable-report * {
+    color: #111827 !important;
+    background: transparent !important;
+    border-color: #d1d5db !important;
+  }
+}
+
+
+#map {
+  width: 100% !important;
+  height: 480px !important;
+  min-height: 480px !important;
+  display: block !important;
+  z-index: 10;
+}
+
+</style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -198,8 +358,8 @@
           </div>
 
           <!-- Map Container -->
-          <div class="split-map-wrapper relative h-[460px] w-full">
-            <div id="map" class="h-full w-full"></div>
+          <div class="split-map-wrapper relative w-full" style="height: 500px; min-height: 500px;">
+            <div id="map" style="height: 500px; width: 100%; min-height: 500px; position: relative; z-index: 1;"></div>
             <div id="split-sar-overlay" class="split-sar-layer"></div>
             <div id="split-divider-line" class="split-divider">
               <div class="split-divider-handle">⇹</div>
@@ -566,12 +726,1688 @@
     </div>
   </footer>
 
-  <script src="js/benchmark_data.js"></script>
-  <script src="js/ai_model.js"></script>
-  <script src="js/change_detection.js"></script>
-  <script src="js/human_review.js"></script>
-  <script src="js/export_report.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/app.js"></script>
+<script>
+/* === benchmark_data.js === */
+/**
+ * SylvaSense (ORION-PS-03) Benchmark Dataset
+ * Precomputed multi-sensor satellite features & ground reference benchmarks
+ * for representative global forest biomes.
+ */
+
+const BENCHMARK_REGIONS = {
+  "western-ghats": {
+    id: "western-ghats",
+    name: "Western Ghats (Agumbe Rainforest)",
+    country: "India",
+    biome: "Tropical Moist Deciduous & Evergreen",
+    coordinates: [13.5152, 75.0934],
+    defaultZoom: 13,
+    bounds: [
+      [13.46, 75.02],
+      [13.57, 75.16]
+    ],
+    areaHectares: 12450,
+    opticalData: {
+      sensor: "Copernicus Sentinel-2B MSI (Level-2A)",
+      t1Date: "2024-01-14",
+      t2Date: "2025-01-18",
+      cloudCoverT1: 8.4,
+      cloudCoverT2: 14.2,
+      meanNDVI: 0.81,
+      meanEVI: 0.58,
+      meanNDRE: 0.42,
+      cloudGapAreaHa: 1768,
+      qualityFlag: "Good (Monsoon Cloud Gaps Filled by SAR)"
+    },
+    sarData: {
+      sensor: "Copernicus Sentinel-1A C-Band SAR (Level-1 GRD)",
+      mode: "IW (Interferometric Wide Swath)",
+      pass: "Ascending Orbit 42",
+      meanVV_dB: -9.8,
+      meanVH_dB: -14.6,
+      polarizationRatio: 0.33,
+      rfdi: 0.62,
+      speckleFilter: "Refined Lee 7x7",
+      penetrationEfficiency: 99.4
+    },
+    gediReference: {
+      product: "NASA GEDI L4A (Footprints) & L4B (1km Gridded AGBD)",
+      footprintCount: 418,
+      meanReferenceAGB: 246.5,
+      gediUncertainty: 28.4
+    },
+    aiEstimation: {
+      biomassP50: 241.8,
+      biomassP10: 218.4,
+      biomassP90: 268.2,
+      totalBiomassTonnes: 3010410,
+      carbonStock_tCO2e: 5189947,
+      canopyCoverPct: 84.6,
+      densityProxyStemsHa: 480,
+      saturationWarning: false,
+      qualityScore: 92
+    },
+    changeDetection: {
+      baselineYear: 2024,
+      monitoringYear: 2025,
+      deforestationHa: 34.2,
+      degradationHa: 89.6,
+      stableForestHa: 12185.0,
+      regrowthHa: 141.2,
+      netCarbonChange_tCO2e: -24100,
+      alertsCount: 14,
+      alerts: [
+        { id: "ALT-WG-01", type: "Deforestation", lat: 13.535, lon: 75.075, areaHa: 14.5, severity: "High", confidence: 94, reason: "Sudden optical drop & VH backscatter loss (road clearance)" },
+        { id: "ALT-WG-02", type: "Degradation", lat: 13.488, lon: 75.122, areaHa: 22.1, severity: "Medium", confidence: 86, reason: "Gradual canopy thinning detected via SAR VH decrease" },
+        { id: "ALT-WG-03", type: "Regrowth", lat: 13.550, lon: 75.140, areaHa: 38.0, severity: "Low", confidence: 89, reason: "Afforestation plot canopy recovery confirmed by dual-sensor" }
+      ]
+    },
+    reviewStatus: "APPROVED",
+    reviewNotes: "Dual-sensor fusion successfully resolved heavy monsoon cloud gaps. Radar backscatter consistent with GEDI validation footprints. Approved for baseline MRV report.",
+    reviewer: "Dr. Ananya Sharma, Senior Forest Remote Sensing Analyst"
+  },
+
+  "amazon-para": {
+    id: "amazon-para",
+    name: "Pará Basin, Amazon Rainforest",
+    country: "Brazil",
+    biome: "Dense Tropical Moist Evergreen Forest",
+    coordinates: [-3.4653, -51.9824],
+    defaultZoom: 12,
+    bounds: [
+      [-3.53, -52.05],
+      [-3.40, -51.91]
+    ],
+    areaHectares: 24800,
+    opticalData: {
+      sensor: "Copernicus Sentinel-2A MSI (Level-2A)",
+      t1Date: "2023-08-12",
+      t2Date: "2024-08-16",
+      cloudCoverT1: 18.2,
+      cloudCoverT2: 24.6,
+      meanNDVI: 0.77,
+      meanEVI: 0.52,
+      meanNDRE: 0.39,
+      cloudGapAreaHa: 6100,
+      qualityFlag: "SAR Critical (Heavy tropical cloud cover)"
+    },
+    sarData: {
+      sensor: "Copernicus Sentinel-1B C-Band SAR",
+      mode: "IW",
+      pass: "Descending Orbit 12",
+      meanVV_dB: -8.9,
+      meanVH_dB: -13.8,
+      polarizationRatio: 0.36,
+      rfdi: 0.68,
+      speckleFilter: "Refined Lee 7x7",
+      penetrationEfficiency: 99.8
+    },
+    gediReference: {
+      product: "NASA GEDI L4A & L4B Gridded AGBD",
+      footprintCount: 684,
+      meanReferenceAGB: 312.0,
+      gediUncertainty: 42.1
+    },
+    aiEstimation: {
+      biomassP50: 298.4,
+      biomassP10: 254.1,
+      biomassP90: 346.0,
+      totalBiomassTonnes: 7400320,
+      carbonStock_tCO2e: 12758251,
+      canopyCoverPct: 88.2,
+      densityProxyStemsHa: 520,
+      saturationWarning: true,
+      qualityScore: 84
+    },
+    changeDetection: {
+      baselineYear: 2023,
+      monitoringYear: 2024,
+      deforestationHa: 284.5,
+      degradationHa: 412.0,
+      stableForestHa: 23980.0,
+      regrowthHa: 123.5,
+      netCarbonChange_tCO2e: -289400,
+      alertsCount: 38,
+      alerts: [
+        { id: "ALT-PA-01", type: "Deforestation", lat: -3.480, lon: -51.950, areaHa: 98.4, severity: "Critical", confidence: 98, reason: "Clear-cut deforestation along emerging feeder track (SAR + Optical verified)" },
+        { id: "ALT-PA-02", type: "Deforestation", lat: -3.425, lon: -52.010, areaHa: 62.1, severity: "High", confidence: 95, reason: "Agricultural pasture expansion into primary canopy" },
+        { id: "ALT-PA-03", type: "Degradation", lat: -3.510, lon: -51.990, areaHa: 75.3, severity: "Medium", confidence: 88, reason: "Selective logging canopy perforation flagged by SAR coherence drop" }
+      ]
+    },
+    reviewStatus: "FLAGGED_FOR_INSPECTION",
+    reviewNotes: "SAR saturation flagged in southern high-biomass quadrant (>300 Mg/ha). Large active deforestation front verified on eastern boundary. Recommend VVB ground survey for parcel 3.",
+    reviewer: "Carlos Silva, Tropical Forest Carbon Auditor"
+  },
+
+  "congo-lope": {
+    id: "congo-lope",
+    name: "Lopé National Park, Congo Basin",
+    country: "Gabon",
+    biome: "Central African Tropical Lowland Rainforest & Savanna Mosaic",
+    coordinates: [-0.2000, 11.6000],
+    defaultZoom: 12,
+    bounds: [
+      [-0.28, 11.52],
+      [-0.12, 11.68]
+    ],
+    areaHectares: 18600,
+    opticalData: {
+      sensor: "Copernicus Sentinel-2B MSI (Level-2A)",
+      t1Date: "2023-11-04",
+      t2Date: "2024-11-08",
+      cloudCoverT1: 29.1,
+      cloudCoverT2: 32.5,
+      meanNDVI: 0.83,
+      meanEVI: 0.61,
+      meanNDRE: 0.44,
+      cloudGapAreaHa: 5800,
+      qualityFlag: "High Cloud Belt - SAR Synthetic Gap-Fill Applied"
+    },
+    sarData: {
+      sensor: "Copernicus Sentinel-1A C-Band SAR",
+      mode: "IW",
+      pass: "Ascending Orbit 86",
+      meanVV_dB: -9.2,
+      meanVH_dB: -14.1,
+      polarizationRatio: 0.35,
+      rfdi: 0.65,
+      speckleFilter: "Refined Lee 7x7",
+      penetrationEfficiency: 99.6
+    },
+    gediReference: {
+      product: "NASA GEDI L4A/L4B Benchmark Core Validation Site",
+      footprintCount: 890,
+      meanReferenceAGB: 334.2,
+      gediUncertainty: 36.8
+    },
+    aiEstimation: {
+      biomassP50: 328.7,
+      biomassP10: 279.4,
+      biomassP90: 381.5,
+      totalBiomassTonnes: 6113820,
+      carbonStock_tCO2e: 10537367,
+      canopyCoverPct: 89.5,
+      densityProxyStemsHa: 540,
+      saturationWarning: true,
+      qualityScore: 88
+    },
+    changeDetection: {
+      baselineYear: 2023,
+      monitoringYear: 2024,
+      deforestationHa: 12.0,
+      degradationHa: 45.2,
+      stableForestHa: 18480.0,
+      regrowthHa: 62.8,
+      netCarbonChange_tCO2e: -11800,
+      alertsCount: 8,
+      alerts: [
+        { id: "ALT-LP-01", type: "Degradation", lat: -0.220, lon: 11.640, areaHa: 18.4, severity: "Medium", confidence: 87, reason: "Natural tree fall gaps & elephant disturbance trail" },
+        { id: "ALT-LP-02", type: "Deforestation", lat: -0.150, lon: 11.560, areaHa: 12.0, severity: "High", confidence: 91, reason: "Park boundary encroachment buffer zone clearance" }
+      ]
+    },
+    reviewStatus: "APPROVED",
+    reviewNotes: "Directly calibrated against NASA GEDI Lopé core site. Confidence bounds widened appropriately to account for C-band saturation in >320 Mg/ha parcels. Conservation status verified intact.",
+    reviewer: "Marie Danielle Ngoma, Gabon National Climate Council"
+  },
+
+  "black-forest": {
+    id: "black-forest",
+    name: "Black Forest (Schwarzwald)",
+    country: "Germany",
+    biome: "Temperate Mixed Mountain Conifer (Norway Spruce & Silver Fir)",
+    coordinates: [48.4500, 8.2500],
+    defaultZoom: 12,
+    bounds: [
+      [48.38, 8.16],
+      [48.52, 8.34]
+    ],
+    areaHectares: 15300,
+    opticalData: {
+      sensor: "Copernicus Sentinel-2A MSI (Level-2A)",
+      t1Date: "2023-06-20",
+      t2Date: "2024-06-25",
+      cloudCoverT1: 4.1,
+      cloudCoverT2: 6.8,
+      meanNDVI: 0.79,
+      meanEVI: 0.54,
+      meanNDRE: 0.40,
+      cloudGapAreaHa: 620,
+      qualityFlag: "Optimal Optical & SAR Co-registration"
+    },
+    sarData: {
+      sensor: "Copernicus Sentinel-1B C-Band SAR",
+      mode: "IW",
+      pass: "Ascending Orbit 15",
+      meanVV_dB: -10.4,
+      meanVH_dB: -16.2,
+      polarizationRatio: 0.29,
+      rfdi: 0.58,
+      speckleFilter: "Refined Lee 7x7",
+      penetrationEfficiency: 99.9
+    },
+    gediReference: {
+      product: "NASA GEDI L4A & German National Forest Inventory (BWI)",
+      footprintCount: 520,
+      meanReferenceAGB: 215.4,
+      gediUncertainty: 19.5
+    },
+    aiEstimation: {
+      biomassP50: 212.6,
+      biomassP10: 196.2,
+      biomassP90: 231.8,
+      totalBiomassTonnes: 3252780,
+      carbonStock_tCO2e: 5606155,
+      canopyCoverPct: 81.3,
+      densityProxyStemsHa: 410,
+      saturationWarning: false,
+      qualityScore: 96
+    },
+    changeDetection: {
+      baselineYear: 2023,
+      monitoringYear: 2024,
+      deforestationHa: 42.1,
+      degradationHa: 68.4,
+      stableForestHa: 15120.0,
+      regrowthHa: 69.5,
+      netCarbonChange_tCO2e: -8400,
+      alertsCount: 11,
+      alerts: [
+        { id: "ALT-BF-01", type: "Degradation", lat: 48.435, lon: 8.210, areaHa: 24.5, severity: "High", confidence: 93, reason: "Bark beetle (Ips typographus) infestation dieback flagged by rapid NDVI decay" },
+        { id: "ALT-BF-02", type: "Deforestation", lat: 48.490, lon: 8.300, areaHa: 17.6, severity: "Medium", confidence: 96, reason: "Sanitary clear-felling following storm windthrow" }
+      ]
+    },
+    reviewStatus: "APPROVED",
+    reviewNotes: "Exceptional agreement with German National Forest Inventory ground plots (R² = 0.89). Bark beetle stress zones accurately identified in both optical NDRE and SAR texture.",
+    reviewer: "Prof. Klaus Becker, European Forestry Institute"
+  },
+
+  "cascadia-olympic": {
+    id: "cascadia-olympic",
+    name: "Olympic Peninsula, Cascadia",
+    country: "USA",
+    biome: "Temperate Coastal Rainforest (Douglas Fir & Western Hemlock)",
+    coordinates: [47.8000, -123.9000],
+    defaultZoom: 11,
+    bounds: [
+      [47.68, -124.08],
+      [47.92, -123.72]
+    ],
+    areaHectares: 31200,
+    opticalData: {
+      sensor: "Copernicus Sentinel-2B MSI (Level-2A)",
+      t1Date: "2023-09-02",
+      t2Date: "2024-09-05",
+      cloudCoverT1: 22.4,
+      cloudCoverT2: 27.8,
+      meanNDVI: 0.85,
+      meanEVI: 0.63,
+      meanNDRE: 0.46,
+      cloudGapAreaHa: 8100,
+      qualityFlag: "Frequent Maritime Fog & Cloud - SAR Critical"
+    },
+    sarData: {
+      sensor: "Copernicus Sentinel-1A C-Band SAR",
+      mode: "IW",
+      pass: "Descending Orbit 55",
+      meanVV_dB: -8.4,
+      meanVH_dB: -13.2,
+      polarizationRatio: 0.38,
+      rfdi: 0.71,
+      speckleFilter: "Refined Lee 7x7",
+      penetrationEfficiency: 99.7
+    },
+    gediReference: {
+      product: "NASA GEDI L4A/L4B & USFS FIA (Forest Inventory and Analysis)",
+      footprintCount: 760,
+      meanReferenceAGB: 345.8,
+      gediUncertainty: 39.2
+    },
+    aiEstimation: {
+      biomassP50: 339.4,
+      biomassP10: 292.0,
+      biomassP90: 394.2,
+      totalBiomassTonnes: 10589280,
+      carbonStock_tCO2e: 18251024,
+      canopyCoverPct: 91.2,
+      densityProxyStemsHa: 590,
+      saturationWarning: true,
+      qualityScore: 89
+    },
+    changeDetection: {
+      baselineYear: 2023,
+      monitoringYear: 2024,
+      deforestationHa: 78.4,
+      degradationHa: 112.6,
+      stableForestHa: 30850.0,
+      regrowthHa: 159.0,
+      netCarbonChange_tCO2e: -36400,
+      alertsCount: 19,
+      alerts: [
+        { id: "ALT-CA-01", type: "Deforestation", lat: 47.830, lon: -123.820, areaHa: 44.2, severity: "High", confidence: 97, reason: "Commercial timber harvest parcel clearcut" },
+        { id: "ALT-CA-02", type: "Degradation", lat: 47.740, lon: -123.960, areaHa: 34.2, severity: "Medium", confidence: 85, reason: "High-wind canopy damage on western ridge" },
+        { id: "ALT-CA-03", type: "Regrowth", lat: 47.870, lon: -123.780, areaHa: 68.0, severity: "Low", confidence: 91, reason: "Second-growth plantation canopy closure" }
+      ]
+    },
+    reviewStatus: "APPROVED",
+    reviewNotes: "High biomass Old Growth zone shows C-band SAR saturation tendency. Model appropriately applies widened uncertainty bands [P10: 292.0 - P90: 394.2 Mg/ha]. Timber parcel harvest boundaries confirmed.",
+    reviewer: "Dr. Ethan Wright, Pacific Rim Geospatial Institute"
+  }
+};
+
+const RESEARCH_REFERENCES = [
+  {
+    num: 1,
+    title: "Sentinel-1: All-Weather Radar Imaging",
+    organization: "European Space Agency (ESA)",
+    url: "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-1",
+    summary: "Synthetic Aperture Radar (SAR) C-band mission providing all-weather, day-and-night structural imaging of forest canopies, penetrating cloud cover and surface haze."
+  },
+  {
+    num: 2,
+    title: "The Sentinel Missions & Copernicus Programme",
+    organization: "European Space Agency (ESA)",
+    url: "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/The_Sentinel_missions",
+    summary: "Overview of Europe's environmental Earth observation constellation providing systematic open-access data for land, climate, and forest monitoring."
+  },
+  {
+    num: 3,
+    title: "Sentinel-2 Multispectral Imaging",
+    organization: "European Space Agency (ESA)",
+    url: "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-2",
+    summary: "13-band optical imaging sensor at 10m-60m spatial resolution delivering spectral reflectance bands for vegetation indices (NDVI, EVI, NDRE) and canopy health assessment."
+  },
+  {
+    num: 4,
+    title: "GEDI L4A Footprint Level Aboveground Biomass Density",
+    organization: "NASA Earthdata",
+    url: "https://earthdata.nasa.gov/",
+    summary: "Waveform LiDAR product providing high-precision aboveground biomass density estimates (Mg/ha) along sampled 25m orbital footprints globally."
+  },
+  {
+    num: 5,
+    title: "GEDI L4B Gridded Aboveground Biomass Density",
+    organization: "NASA Earthdata",
+    url: "https://earthdata.nasa.gov/",
+    summary: "1 km gridded mean biomass density and uncertainty product derived from footprint-level GEDI sampling for regional and global carbon stock estimation."
+  },
+  {
+    num: 6,
+    title: "REDD+ MRV and Results-Based Payments",
+    organization: "UNFCCC",
+    url: "https://redd.unfccc.int/",
+    summary: "International framework for Measurement, Reporting, and Verification (MRV) of forest carbon stock changes and reduced emissions from deforestation."
+  },
+  {
+    num: 7,
+    title: "National Forest Monitoring Systems (NFMS)",
+    organization: "UNFCCC",
+    url: "https://redd.unfccc.int/",
+    summary: "Guidance on transparent, continuous, and auditable satellite monitoring systems combining remote sensing with national forest inventories."
+  },
+  {
+    num: 8,
+    title: "Measurement, Reporting and Verification for Environmental Integrity",
+    organization: "Food and Agriculture Organization (FAO)",
+    url: "https://www.fao.org/",
+    summary: "Principles for high-integrity forest carbon MRV: consistency, transparency, accuracy, uncertainty quantification, and independent audibility."
+  },
+  {
+    num: 9,
+    title: "Synergistic Use of Sentinel-1 and Sentinel-2 for Biomass Estimation",
+    organization: "MDPI Forests (2023)",
+    url: "https://www.mdpi.com/1999-4907/14/8/1615",
+    summary: "Peer-reviewed methodology demonstrating how feature-level fusion of SAR backscatter (VV/VH) and optical vegetation indices overcomes individual sensor limitations."
+  },
+  {
+    num: 10,
+    title: "Monitoring and Verification of Carbon Credits from Forestry",
+    organization: "ESA Business Applications",
+    url: "https://business.esa.int/",
+    summary: "Technical report on satellite Earth observation workflows for independent Validation and Verification Bodies (VVBs) assessing carbon offset projects."
+  }
+];
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { BENCHMARK_REGIONS, RESEARCH_REFERENCES };
+}
+
+
+/* === ai_model.js === */
+/**
+ * SylvaSense (ORION-PS-03) AI Feature Fusion Engine
+ * Dual-Branch Neural Architecture combining Optical (Sentinel-2) & SAR (Sentinel-1)
+ * with Quantile Uncertainty Quantification & Stand-Level Density Proxy
+ */
+
+class SylvaSenseAIEngine {
+  constructor() {
+    this.version = "SylvaSense-FusionNet-v2.4";
+    this.carbonFraction = 0.47; // IPCC standard carbon fraction of dry biomass
+    this.co2ConversionFactor = 3.667; // 44/12 molecular weight ratio CO2/C
+  }
+
+  /**
+   * Optical Encoder (Branch 1)
+   * Processes Sentinel-2 spectral bands and vegetation indices
+   */
+  encodeOptical(features) {
+    const ndvi = features.ndvi ?? 0.75;
+    const evi = features.evi ?? 0.52;
+    const ndre = features.ndre ?? 0.38;
+    const cloudCover = features.cloudCover ?? 10.0;
+
+    // Optical canopy representation (latent scalar)
+    // Higher NDVI/EVI indicates healthy leafy green canopy
+    const opticalSignal = (ndvi * 0.5) + (evi * 0.35) + (ndre * 0.15);
+    
+    // Cloud attenuation penalty: optical confidence decreases with cloud cover
+    const opticalConfidence = Math.max(0.2, (100 - cloudCover) / 100);
+
+    return {
+      opticalSignal,
+      opticalConfidence,
+      latentVector: [ndvi, evi, ndre, opticalConfidence]
+    };
+  }
+
+  /**
+   * SAR Encoder (Branch 2)
+   * Processes Sentinel-1 all-weather C-band backscatter and structural metrics
+   */
+  encodeSAR(features) {
+    const vv_dB = features.vv_dB ?? -10.0;
+    const vh_dB = features.vh_dB ?? -15.0;
+    const polRatio = features.polarizationRatio ?? 0.32;
+    const rfdi = features.rfdi ?? 0.60;
+
+    // Convert dB to linear intensity for volumetric scattering
+    const vv_linear = Math.pow(10, vv_dB / 10);
+    const vh_linear = Math.pow(10, vh_dB / 10);
+
+    // Cross-polarized VH backscatter is directly proportional to forest volumetric canopy scattering
+    // RFDI highlights canopy structural disturbance
+    const sarSignal = (vh_linear * 1800) + (polRatio * 120) + (rfdi * 45);
+
+    // SAR penetrates all-weather cloud cover: confidence remains consistently high (>98%)
+    const sarConfidence = 0.985;
+
+    return {
+      sarSignal,
+      sarConfidence,
+      latentVector: [vv_dB, vh_dB, polRatio, rfdi, sarConfidence]
+    };
+  }
+
+  /**
+   * Cross-Modal Fusion Layer
+   * Combines learned representations inside the model rather than late-averaging predictions
+   */
+  fuseFeatures(opticalLatent, sarLatent) {
+    // Dynamic weighting based on optical sensor quality/cloud cover
+    // When cloud cover is high, the model dynamically shifts weight to SAR branch
+    const totalConfidence = opticalLatent.opticalConfidence + sarLatent.sarConfidence;
+    const wOptical = opticalLatent.opticalConfidence / totalConfidence;
+    const wSAR = sarLatent.sarConfidence / totalConfidence;
+
+    const fusedRepresentation = (opticalLatent.opticalSignal * 180 * wOptical) + 
+                                (sarLatent.sarSignal * 1.35 * wSAR);
+
+    return {
+      fusedRepresentation,
+      wOptical,
+      wSAR,
+      effectiveQuality: Math.round((opticalLatent.opticalConfidence * 0.4 + sarLatent.sarConfidence * 0.6) * 100)
+    };
+  }
+
+  /**
+   * Prediction Heads with Quantile Regression & Honest Limitations
+   */
+  predict(opticalInput, sarInput, gediReference, areaHectares = 10000) {
+    const opticalEncoded = this.encodeOptical(opticalInput);
+    const sarEncoded = this.encodeSAR(sarInput);
+    const fused = this.fuseFeatures(opticalEncoded, sarEncoded);
+
+    // Calibration factor with GEDI reference
+    let rawAGB = fused.fusedRepresentation;
+    if (gediReference && gediReference.meanReferenceAGB) {
+      // Anchored to GEDI L4A/L4B orbital footprints
+      const gediAnchor = gediReference.meanReferenceAGB;
+      rawAGB = (rawAGB * 0.45) + (gediAnchor * 0.55);
+    }
+
+    // Honest Limitation 1: C-band SAR saturation beyond ~250-300 Mg/ha
+    let saturationWarning = false;
+    let saturationPenalty = 0;
+    if (rawAGB > 275) {
+      saturationWarning = true;
+      // In very dense forests, C-band SAR backscatter saturates; uncertainty widens
+      saturationPenalty = (rawAGB - 275) * 0.22;
+    }
+
+    // Median prediction (P50)
+    const biomassP50 = Math.round((rawAGB) * 10) / 10;
+
+    // Quantile Regression Heads for explicit uncertainty quantification:
+    // Base uncertainty standard error (8% - 15%) + optical cloud penalty + radar saturation penalty
+    const baseVariancePct = 0.08 + ((1 - opticalEncoded.opticalConfidence) * 0.06) + (saturationWarning ? 0.05 : 0);
+    const halfWidth = (biomassP50 * baseVariancePct) + saturationPenalty;
+
+    const biomassP10 = Math.round(Math.max(10, biomassP50 - halfWidth * 1.28) * 10) / 10;
+    const biomassP90 = Math.round((biomassP50 + halfWidth * 1.28) * 10) / 10;
+
+    // Carbon Stock Calculation:
+    // Total Biomass (tonnes) = AGBD (Mg/ha) * Area (ha)
+    const totalBiomassTonnes = Math.round(biomassP50 * areaHectares);
+    // tCO2e = Biomass * Carbon Fraction (0.47) * CO2/C Ratio (3.667)
+    const carbonStock_tCO2e = Math.round(totalBiomassTonnes * this.carbonFraction * this.co2ConversionFactor);
+
+    // Stand-Level Forest Density Proxy Head (Slide 3 limitation: Not individual tree counts)
+    const canopyCoverPct = Math.min(98.5, Math.max(25.0, Math.round((biomassP50 * 0.26 + opticalEncoded.opticalSignal * 18) * 10) / 10));
+    // Estimated stem density proxy stems/ha
+    const densityProxyStemsHa = Math.round(canopyCoverPct * 5.8 + (sarEncoded.sarSignal * 0.4));
+
+    return {
+      modelName: this.version,
+      timestamp: new Date().toISOString(),
+      biomassEstimates: {
+        p10LowerBound: biomassP10,
+        p50Median: biomassP50,
+        p90UpperBound: biomassP90,
+        unit: "Mg/ha (tonnes/ha)",
+        uncertaintyMarginPct: Math.round(((biomassP90 - biomassP10) / (2 * biomassP50)) * 1000) / 10
+      },
+      carbonStock: {
+        totalBiomassTonnes,
+        total_tCO2e: carbonStock_tCO2e,
+        carbonFraction: this.carbonFraction,
+        conversionRatio: this.co2ConversionFactor
+      },
+      densityProxy: {
+        canopyCoverPct,
+        densityProxyStemsHa,
+        resolutionNotice: "Stand-level density proxy computed at 10m Copernicus resolution (individual-tree counting reserved for sub-meter data)"
+      },
+      featureWeights: {
+        opticalWeightPct: Math.round(fused.wOptical * 100),
+        sarWeightPct: Math.round(fused.wSAR * 100),
+        effectiveQualityScore: fused.effectiveQuality
+      },
+      limitations: {
+        saturationWarning,
+        saturationThreshold: "275-300 Mg/ha (C-Band SAR)",
+        gediReferenced: !!gediReference,
+        requiresFieldValidation: true
+      }
+    };
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SylvaSenseAIEngine;
+}
+
+
+/* === change_detection.js === */
+/**
+ * SylvaSense (ORION-PS-03) Temporal Change Detection Module
+ * Bi-temporal differencing across Sentinel-1 SAR & Sentinel-2 Optical
+ * Flags deforestation, forest degradation, canopy recovery, and cloud-gap anomalies
+ */
+
+class SylvaSenseChangeDetector {
+  constructor() {
+    this.deforestationThreshold = -0.22; // Delta NDVI or Delta VH
+    this.degradationThreshold = -0.10;
+    this.regrowthThreshold = 0.08;
+  }
+
+  /**
+   * Run temporal change detection between Baseline (T1) and Monitoring (T2) periods
+   */
+  detect(regionData, t1Date, t2Date) {
+    if (!regionData) return null;
+
+    const baseChange = regionData.changeDetection;
+    const totalArea = regionData.areaHectares;
+    const meanBiomass = regionData.aiEstimation.biomassP50;
+
+    // Carbon conversion parameters
+    const carbonFraction = 0.47;
+    const co2Ratio = 3.667;
+
+    // Generate alerts with coordinates and metadata
+    const alerts = (baseChange.alerts || []).map((alert, idx) => {
+      const biomassLossTonnes = Math.round(alert.areaHa * meanBiomass * (alert.type === "Deforestation" ? 0.92 : 0.45));
+      const carbonLoss_tCO2e = Math.round(biomassLossTonnes * carbonFraction * co2Ratio);
+      return {
+        ...alert,
+        index: idx + 1,
+        detectionMethod: "Multi-Sensor Coherence Loss & Dual-Band Difference",
+        detectionDate: t2Date || baseChange.monitoringYear + "-09-15",
+        estimatedEmissions_tCO2e: alert.type === "Regrowth" ? -Math.round(alert.areaHa * 18 * carbonFraction * co2Ratio) : carbonLoss_tCO2e
+      };
+    });
+
+    return {
+      baselinePeriod: t1Date || regionData.opticalData.t1Date,
+      monitoringPeriod: t2Date || regionData.opticalData.t2Date,
+      summary: {
+        totalAreaHectares: totalArea,
+        deforestedHectares: baseChange.deforestationHa,
+        deforestedPct: Math.round((baseChange.deforestationHa / totalArea) * 1000) / 10,
+        degradedHectares: baseChange.degradationHa,
+        degradedPct: Math.round((baseChange.degradationHa / totalArea) * 1000) / 10,
+        stableForestHectares: baseChange.stableForestHa,
+        stableForestPct: Math.round((baseChange.stableForestHa / totalArea) * 1000) / 10,
+        regrowthHectares: baseChange.regrowthHa,
+        regrowthPct: Math.round((baseChange.regrowthHa / totalArea) * 1000) / 10,
+        netCarbonChange_tCO2e: baseChange.netCarbonChange_tCO2e,
+        totalAlertsCount: alerts.length
+      },
+      alertsList: alerts,
+      sarFillContribution: {
+        radarAssistedAlertsPct: 78.5,
+        opticalCloudGapsCircumvented: regionData.opticalData.cloudGapAreaHa + " ha"
+      }
+    };
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SylvaSenseChangeDetector;
+}
+
+
+/* === human_review.js === */
+/**
+ * SylvaSense (ORION-PS-03) Human-in-the-Loop Review Layer
+ * Validates, records auditor notes, manages sign-off states,
+ * and generates cryptographic audit hashes for MRV evidence reports.
+ */
+
+class SylvaSenseReviewManager {
+  constructor() {
+    this.auditLog = [];
+  }
+
+  /**
+   * Fast client/server SHA-256 hash representation for data integrity audit
+   */
+  async computeAuditHash(payload) {
+    const jsonStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    
+    // Use Web Crypto API in browser or Node crypto
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const msgBuffer = new TextEncoder().encode(jsonStr);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+      // Fallback simple 64-char hex digest simulation for older environments
+      let hash = 0;
+      for (let i = 0; i < jsonStr.length; i++) {
+        hash = (hash << 5) - hash + jsonStr.charCodeAt(i);
+        hash |= 0;
+      }
+      return ("a1f8c" + Math.abs(hash).toString(16) + "e9b4d82f7c0147983adce476109b" + Date.now().toString(16)).padEnd(64, '0').slice(0, 64);
+    }
+  }
+
+  /**
+   * Submit or update a human review entry
+   */
+  async submitReview(data) {
+    const entry = {
+      id: "REV-" + Date.now().toString(36).toUpperCase(),
+      timestamp: new Date().toISOString(),
+      regionId: data.regionId,
+      reviewerName: data.reviewerName || "Independent Forest Carbon Auditor",
+      reviewerRole: data.reviewerRole || "VVB Lead Assessor",
+      organization: data.organization || "Global Forest MRV Consortium",
+      status: data.status || "APPROVED", // APPROVED, REVISED_OUTPUT, FLAGGED_FOR_INSPECTION
+      comments: data.comments || "Outputs verified against Sentinel-1 SAR and Sentinel-2 optical imagery.",
+      uncertaintyAcknowledged: !!data.uncertaintyAcknowledged,
+      saturationNotes: data.saturationNotes || "C-band saturation parameters reviewed.",
+      auditHash: ""
+    };
+
+    // Calculate cryptographic audit hash
+    entry.auditHash = await this.computeAuditHash(entry);
+    this.auditLog.unshift(entry);
+
+    return entry;
+  }
+
+  getAuditLog() {
+    return this.auditLog;
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SylvaSenseReviewManager;
+}
+
+
+/* === export_report.js === */
+/**
+ * SylvaSense (ORION-PS-03) Evidence Report & Verification Export
+ * Generates audit-grade MRV verification documents, JSON/GeoJSON packages,
+ * and high-fidelity printable PDF reports.
+ */
+
+class SylvaSenseReportExporter {
+  /**
+   * Build complete verification evidence report payload
+   */
+  generateReportPayload(regionData, aiResult, changeResult, reviewEntry) {
+    const reportId = "SYLVA-MRV-" + Date.now().toString(36).toUpperCase();
+    const timestamp = new Date().toISOString();
+
+    return {
+      documentMetadata: {
+        reportId,
+        platform: "SylvaSense - Forest-Carbon Monitoring Platform",
+        problemStatement: "ORION-PS-03",
+        standardCompliance: ["UNFCCC REDD+ MRV", "FAO NFMS Guidelines", "VVB ISO 14064-3 Supporting Evidence"],
+        generatedAt: timestamp,
+        cryptographicHash: reviewEntry ? reviewEntry.auditHash : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      projectArea: {
+        regionId: regionData.id,
+        name: regionData.name,
+        country: regionData.country,
+        biome: regionData.biome,
+        coordinates: regionData.coordinates,
+        boundingPolygon: regionData.bounds,
+        totalAreaHectares: regionData.areaHectares
+      },
+      satelliteObservations: {
+        optical: {
+          sensor: regionData.opticalData.sensor,
+          baselineDate: changeResult?.baselinePeriod || regionData.opticalData.t1Date,
+          monitoringDate: changeResult?.monitoringPeriod || regionData.opticalData.t2Date,
+          cloudCoverBaselinePct: regionData.opticalData.cloudCoverT1,
+          cloudCoverMonitoringPct: regionData.opticalData.cloudCoverT2,
+          meanNDVI: regionData.opticalData.meanNDVI,
+          meanEVI: regionData.opticalData.meanEVI,
+          cloudGapAreaHa: regionData.opticalData.cloudGapAreaHa,
+          cloudPenetrationStatus: regionData.opticalData.qualityFlag
+        },
+        sar: {
+          sensor: regionData.sarData.sensor,
+          mode: regionData.sarData.mode,
+          orbit: regionData.sarData.pass,
+          meanVV_dB: regionData.sarData.meanVV_dB,
+          meanVH_dB: regionData.sarData.meanVH_dB,
+          polarizationRatio: regionData.sarData.polarizationRatio,
+          rfdi: regionData.sarData.rfdi,
+          speckleFilter: regionData.sarData.speckleFilter,
+          allWeatherPenetrationEfficiencyPct: regionData.sarData.penetrationEfficiency
+        },
+        referenceValidation: {
+          dataset: regionData.gediReference.product,
+          sampledFootprints: regionData.gediReference.footprintCount,
+          meanReferenceBiomassMgHa: regionData.gediReference.meanReferenceAGB,
+          gediStandardError: regionData.gediReference.gediUncertainty
+        }
+      },
+      aiBiomassAndDensity: {
+        modelArchitecture: "Dual-Branch Optical/SAR Feature-Level Fusion (SylvaSense-v2.4)",
+        biomassDensity: {
+          p10LowerConfidenceMgHa: aiResult.biomassEstimates.p10LowerBound,
+          p50MedianEstimateMgHa: aiResult.biomassEstimates.p50Median,
+          p90UpperConfidenceMgHa: aiResult.biomassEstimates.p90UpperBound,
+          uncertaintyMarginPct: aiResult.biomassEstimates.uncertaintyMarginPct
+        },
+        carbonStock: {
+          totalDryBiomassTonnes: aiResult.carbonStock.totalBiomassTonnes,
+          totalCarbonStock_tCO2e: aiResult.carbonStock.total_tCO2e,
+          carbonFractionFactor: 0.47,
+          molecularConversionCO2: 3.667
+        },
+        forestStructure: {
+          standCanopyCoverPct: aiResult.densityProxy.canopyCoverPct,
+          estimatedStemDensityProxyStemsHa: aiResult.densityProxy.densityProxyStemsHa,
+          resolutionLimitNotice: "Stand-level density proxy at 10m spatial resolution"
+        }
+      },
+      temporalChangeAnalysis: {
+        observationWindow: `${changeResult?.baselinePeriod || regionData.opticalData.t1Date} to ${changeResult?.monitoringPeriod || regionData.opticalData.t2Date}`,
+        deforestationHa: changeResult?.summary.deforestedHectares || regionData.changeDetection.deforestationHa,
+        degradationHa: changeResult?.summary.degradedHectares || regionData.changeDetection.degradationHa,
+        stableForestHa: changeResult?.summary.stableForestHectares || regionData.changeDetection.stableForestHa,
+        regrowthHa: changeResult?.summary.regrowthHectares || regionData.changeDetection.regrowthHa,
+        netCarbonEmissions_tCO2e: changeResult?.summary.netCarbonChange_tCO2e || regionData.changeDetection.netCarbonChange_tCO2e,
+        verifiedAlertsCount: changeResult?.summary.totalAlertsCount || regionData.changeDetection.alertsCount,
+        alerts: changeResult?.alertsList || regionData.changeDetection.alerts
+      },
+      scientificIntegrityAndLimitations: {
+        gediSamplingNature: "NASA GEDI data is sampled waveform LiDAR, serving as calibration reference rather than wall-to-wall ground truth.",
+        sarSaturationContext: "C-band radar backscatter experiences sensitivity plateau in dense biomass (>280 Mg/ha); uncertainty intervals have been expanded accordingly.",
+        resolutionBoundary: "Copernicus 10m optical/SAR resolution provides stand-level density proxies; tree-level enumeration requires sub-meter data.",
+        fieldValidationRole: "Satellite observations support evidence collection and reduce ground survey frequencies but do not eliminate ground-truth audits.",
+        regulatoryPositioning: "SylvaSense is an independent evidence and monitoring workflow integrator; it does not issue or certify carbon credits autonomously."
+      },
+      humanReviewSignOff: {
+        status: reviewEntry?.status || regionData.reviewStatus || "APPROVED",
+        reviewerName: reviewEntry?.reviewerName || regionData.reviewer || "Senior Remote Sensing Specialist",
+        organization: reviewEntry?.organization || "Forest Carbon MRV Review Council",
+        signOffDate: reviewEntry?.timestamp || timestamp,
+        auditorComments: reviewEntry?.comments || regionData.reviewNotes,
+        cryptographicProof: reviewEntry?.auditHash || "SHA256: 4f8b9e128...verified"
+      }
+    };
+  }
+
+  /**
+   * Export JSON report file
+   */
+  downloadJSON(payload) {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${payload.documentMetadata.reportId}_SylvaSense_Evidence_Report.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  /**
+   * Export GeoJSON boundary and alerts file
+   */
+  downloadGeoJSON(regionData, changeResult) {
+    const geojson = {
+      type: "FeatureCollection",
+      properties: {
+        regionId: regionData.id,
+        regionName: regionData.name,
+        country: regionData.country,
+        generatedBy: "SylvaSense ORION-PS-03"
+      },
+      features: [
+        {
+          type: "Feature",
+          properties: {
+            layer: "AreaOfInterest",
+            name: regionData.name,
+            areaHa: regionData.areaHectares
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [[
+              [regionData.bounds[0][1], regionData.bounds[0][0]],
+              [regionData.bounds[1][1], regionData.bounds[0][0]],
+              [regionData.bounds[1][1], regionData.bounds[1][0]],
+              [regionData.bounds[0][1], regionData.bounds[1][0]],
+              [regionData.bounds[0][1], regionData.bounds[0][0]]
+            ]]
+          }
+        },
+        ...(changeResult?.alertsList || []).map(alert => ({
+          type: "Feature",
+          properties: {
+            layer: "ChangeAlert",
+            alertId: alert.id,
+            type: alert.type,
+            severity: alert.severity,
+            confidence: alert.confidence,
+            areaHa: alert.areaHa,
+            reason: alert.reason
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [alert.lon, alert.lat]
+          }
+        }))
+      ]
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojson, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${regionData.id}_SylvaSense_GeoPackage.geojson`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SylvaSenseReportExporter;
+}
+
+
+/* === map.js === */
+/**
+ * SylvaSense (ORION-PS-03) Interactive Map & Geospatial Layer Engine
+ * Powered by Leaflet GIS with Optical vs SAR Split Swipe & Biomass Heatmaps
+ */
+
+class SylvaSenseMap {
+  constructor(containerId = "map") {
+    this.containerId = containerId;
+    this.map = null;
+    this.currentRegion = null;
+    this.aoiLayer = null;
+    this.alertsLayer = null;
+    this.biomassLayer = null;
+    this.densityLayer = null;
+    this.cloudGapLayer = null;
+    this.baseLayers = {};
+    this.activeOverlay = "biomass"; // biomass, density, alerts, cloudgap, none
+    this.viewMode = "split"; // standard, split, sar_only, optical_only
+    this.splitDividerRatio = 0.5; // 50% split
+  }
+
+  init(regionData) {
+    if (this.map) {
+      this.map.remove();
+    }
+
+    const coords = regionData ? regionData.coordinates : [13.5152, 75.0934];
+    const zoom = regionData ? regionData.defaultZoom : 13;
+
+    // Initialize Leaflet Map
+    this.map = L.map(this.containerId, {
+      zoomControl: true,
+      attributionControl: false
+    }).setView(coords, zoom);
+
+    // Attribution
+    L.control.attribution({
+      position: 'bottomright',
+      prefix: '<span class="text-xs text-emerald-400 font-mono">SylvaSense GIS Engine | Sentinel-1 & 2</span>'
+    }).addTo(this.map);
+
+    // Base Layer: OpenStreetMap (Guaranteed global availability & fast rendering)
+    this.baseLayers.osm = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 19, attribution: '&copy; OpenStreetMap | SylvaSense' }
+    ).addTo(this.map);
+
+    // Satellite Layer: ESRI World Imagery
+    this.baseLayers.satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 18 }
+    );
+
+    // Dark carto layer for high-contrast thematic views
+    this.baseLayers.dark = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19, subdomains: 'abcd' }
+    );
+
+    this.alertsLayer = L.layerGroup().addTo(this.map);
+    this.biomassLayer = L.layerGroup().addTo(this.map);
+    this.densityLayer = L.layerGroup();
+    this.cloudGapLayer = L.layerGroup();
+
+    if (regionData) {
+      this.loadRegion(regionData);
+    }
+
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 150);
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 600);
+  }
+
+  loadRegion(regionData) {
+    this.currentRegion = regionData;
+    this.map.setView(regionData.coordinates, regionData.defaultZoom);
+
+    // Render AOI Bounding Box
+    if (this.aoiLayer) {
+      this.map.removeLayer(this.aoiLayer);
+    }
+
+    const bounds = regionData.bounds;
+    this.aoiLayer = L.rectangle(bounds, {
+      color: "#10b981",
+      weight: 2,
+      dashArray: "6, 6",
+      fillColor: "#059669",
+      fillOpacity: 0.05
+    }).addTo(this.map);
+
+    this.aoiLayer.bindTooltip(`<b>${regionData.name}</b><br>Area: ${regionData.areaHectares.toLocaleString()} ha`, {
+      permanent: false,
+      direction: 'top'
+    });
+
+    // Render alerts
+    this.renderAlerts(regionData.changeDetection.alerts);
+
+    // Render synthetic biomass grid
+    this.renderBiomassGrid(regionData);
+
+    // Render cloud-gap penetration layer
+    this.renderCloudGapLayer(regionData);
+  }
+
+  /**
+   * Render Change Detection Alert Polygons
+   */
+  renderAlerts(alerts) {
+    this.alertsLayer.clearLayers();
+
+    if (!alerts || alerts.length === 0) return;
+
+    alerts.forEach(alert => {
+      const color = alert.type === "Deforestation" ? "#ef4444" : 
+                    alert.type === "Degradation" ? "#f59e0b" : "#06b6d4";
+
+      const radius = Math.max(120, Math.sqrt(alert.areaHa * 10000) * 0.8);
+
+      const circle = L.circle([alert.lat, alert.lon], {
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.45,
+        radius: radius,
+        weight: 2
+      });
+
+      const popupContent = `
+        <div class="p-2 font-sans text-slate-100 min-w-[220px]">
+          <div class="flex items-center justify-between gap-2 border-b border-slate-700 pb-1 mb-2">
+            <span class="text-xs font-bold font-mono text-slate-400">${alert.id}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+              alert.type === 'Deforestation' ? 'bg-red-900/80 text-red-300' :
+              alert.type === 'Degradation' ? 'bg-amber-900/80 text-amber-300' : 'bg-cyan-900/80 text-cyan-300'
+            }">${alert.type}</span>
+          </div>
+          <p class="text-xs text-slate-300 font-medium mb-1.5">${alert.reason}</p>
+          <div class="grid grid-cols-2 gap-1 text-[11px] bg-slate-900/60 p-2 rounded">
+            <span class="text-slate-400">Affected Area:</span>
+            <span class="font-bold text-right text-emerald-400">${alert.areaHa} ha</span>
+            <span class="text-slate-400">Severity:</span>
+            <span class="font-bold text-right text-slate-200">${alert.severity}</span>
+            <span class="text-slate-400">Confidence:</span>
+            <span class="font-bold text-right text-slate-200">${alert.confidence}%</span>
+          </div>
+        </div>
+      `;
+
+      circle.bindPopup(popupContent, { className: 'sylva-leaflet-popup' });
+      this.alertsLayer.addLayer(circle);
+    });
+  }
+
+  /**
+   * Render dynamic AI Biomass Grid / Heatmap representation
+   */
+  renderBiomassGrid(regionData) {
+    this.biomassLayer.clearLayers();
+    this.densityLayer.clearLayers();
+
+    const bounds = regionData.bounds;
+    const latMin = bounds[0][0];
+    const latMax = bounds[1][0];
+    const lonMin = bounds[0][1];
+    const lonMax = bounds[1][1];
+
+    const latStep = (latMax - latMin) / 6;
+    const lonStep = (lonMax - lonMin) / 6;
+    const baseBiomass = regionData.aiEstimation.biomassP50;
+
+    for (let i = 0; i < 6; i++) {
+      for (let j = 0; j < 6; j++) {
+        const cellLat = latMin + i * latStep;
+        const cellLon = lonMin + j * lonStep;
+
+        // Pseudo-spatial variation simulating natural forest biomass distribution
+        const noise = Math.sin(i * 1.5) * Math.cos(j * 1.7) * 45;
+        const cellBiomass = Math.max(40, Math.round(baseBiomass + noise));
+        const cellDensity = Math.min(96, Math.max(30, Math.round(cellBiomass * 0.28 + 15)));
+
+        // Color mapping for biomass (Yellow-Green to Deep Emerald)
+        let bioColor = "#fef08a"; // low biomass
+        let fillOp = 0.35;
+        if (cellBiomass > 300) { bioColor = "#064e3b"; fillOp = 0.55; }
+        else if (cellBiomass > 240) { bioColor = "#047857"; fillOp = 0.48; }
+        else if (cellBiomass > 180) { bioColor = "#10b981"; fillOp = 0.42; }
+        else if (cellBiomass > 120) { bioColor = "#34d399"; fillOp = 0.38; }
+
+        const rectBounds = [
+          [cellLat, cellLon],
+          [cellLat + latStep, cellLon + lonStep]
+        ];
+
+        // Biomass Cell
+        const bioRect = L.rectangle(rectBounds, {
+          color: bioColor,
+          weight: 0.5,
+          fillColor: bioColor,
+          fillOpacity: fillOp
+        });
+
+        bioRect.bindTooltip(`
+          <div class="text-xs">
+            <b>Biomass Density:</b> ${cellBiomass} Mg/ha<br>
+            <b>Canopy Cover:</b> ${cellDensity}%<br>
+            <span class="text-slate-400">Sensor: Sentinel-1/2 AI Fusion</span>
+          </div>
+        `, { sticky: true });
+
+        this.biomassLayer.addLayer(bioRect);
+      }
+    }
+  }
+
+  /**
+   * Render Cloud-Gap Demonstration Layer (Slide 2 & 4: SAR penetrates optical cloud gaps)
+   */
+  renderCloudGapLayer(regionData) {
+    this.cloudGapLayer.clearLayers();
+    if (!regionData.opticalData.cloudGapAreaHa) return;
+
+    const bounds = regionData.bounds;
+    const centerLat = (bounds[0][0] + bounds[1][0]) / 2;
+    const centerLon = (bounds[0][1] + bounds[1][1]) / 2;
+
+    // Cloud simulation zone where Sentinel-2 is blinded by cloud, but Sentinel-1 SAR sees through
+    const cloudCircle = L.circle([centerLat + 0.02, centerLon - 0.02], {
+      color: "#94a3b8",
+      fillColor: "#cbd5e1",
+      fillOpacity: 0.4,
+      radius: 2200,
+      dashArray: "4, 8",
+      weight: 2
+    });
+
+    cloudCircle.bindPopup(`
+      <div class="p-2 text-xs text-slate-200">
+        <div class="font-bold text-sky-400 mb-1">☁️ Optical Cloud Gap Zone (${regionData.opticalData.cloudGapAreaHa} ha)</div>
+        <p class="text-slate-300">Optical Sentinel-2 is 100% occluded by tropical cloud/fog here.</p>
+        <p class="text-emerald-400 font-semibold mt-1">✓ Sentinel-1 C-Band SAR successfully penetrates, monitoring structural biomass continuously.</p>
+      </div>
+    `);
+
+    this.cloudGapLayer.addLayer(cloudCircle);
+  }
+
+  /**
+   * Layer Toggle Controller
+   */
+  setLayer(layerName) {
+    this.activeOverlay = layerName;
+
+    if (layerName === "biomass") {
+      this.map.addLayer(this.biomassLayer);
+      if (this.map.hasLayer(this.densityLayer)) this.map.removeLayer(this.densityLayer);
+      if (this.map.hasLayer(this.cloudGapLayer)) this.map.removeLayer(this.cloudGapLayer);
+    } else if (layerName === "density") {
+      if (this.map.hasLayer(this.biomassLayer)) this.map.removeLayer(this.biomassLayer);
+      this.map.addLayer(this.densityLayer);
+      if (this.map.hasLayer(this.cloudGapLayer)) this.map.removeLayer(this.cloudGapLayer);
+    } else if (layerName === "cloudgap") {
+      this.map.addLayer(this.biomassLayer);
+      this.map.addLayer(this.cloudGapLayer);
+    } else if (layerName === "alerts") {
+      // alerts are always on top
+    } else if (layerName === "none") {
+      if (this.map.hasLayer(this.biomassLayer)) this.map.removeLayer(this.biomassLayer);
+      if (this.map.hasLayer(this.cloudGapLayer)) this.map.removeLayer(this.cloudGapLayer);
+    }
+  }
+
+  toggleAlerts(show) {
+    if (show) {
+      if (!this.map.hasLayer(this.alertsLayer)) this.map.addLayer(this.alertsLayer);
+    } else {
+      if (this.map.hasLayer(this.alertsLayer)) this.map.removeLayer(this.alertsLayer);
+    }
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SylvaSenseMap;
+}
+
+
+window.addEventListener('resize', () => {
+  if (window.sylvaApp && window.sylvaApp.mapEngine && window.sylvaApp.mapEngine.map) {
+    window.sylvaApp.mapEngine.map.invalidateSize();
+  }
+});
+
+
+/* === app.js === */
+/**
+ * SylvaSense (ORION-PS-03) Main Frontend Application Controller
+ * Coordinates GIS Map, AI Engine, Change Detection, Human-in-the-Loop Review,
+ * and Verification Report Generation.
+ */
+
+class SylvaSenseApp {
+  constructor() {
+    this.currentRegionId = "western-ghats";
+    this.currentRegion = null;
+    this.aiEngine = new SylvaSenseAIEngine();
+    this.changeDetector = new SylvaSenseChangeDetector();
+    this.reviewManager = new SylvaSenseReviewManager();
+    this.reportExporter = new SylvaSenseReportExporter();
+    this.mapEngine = null;
+    this.aiResult = null;
+    this.changeResult = null;
+    this.activeReview = null;
+    this.splitSliderPos = 50;
+  }
+
+  async init() {
+    console.log("Initializing SylvaSense Forest-Carbon Monitoring Platform (ORION-PS-03)...");
+    this.currentRegion = BENCHMARK_REGIONS[this.currentRegionId];
+    this.mapEngine = new SylvaSenseMap("map");
+    this.mapEngine.init(this.currentRegion);
+    this.bindEvents();
+    await this.runPipeline();
+    this.renderReferences();
+    this.renderWorkflowSteps();
+    this.updateBusinessCalculator();
+  }
+
+  async runPipeline() {
+    const statusBanner = document.getElementById("pipeline-status-banner");
+    if (statusBanner) {
+      statusBanner.classList.remove("hidden");
+      statusBanner.innerText = "Executing 9-layer feature fusion pipeline (Sentinel-1 SAR + Sentinel-2 Optical)...";
+    }
+
+    const opticalInput = {
+      ndvi: this.currentRegion.opticalData.meanNDVI,
+      evi: this.currentRegion.opticalData.meanEVI,
+      ndre: this.currentRegion.opticalData.meanNDRE,
+      cloudCover: this.currentRegion.opticalData.cloudCoverT2
+    };
+
+    const sarInput = {
+      vv_dB: this.currentRegion.sarData.meanVV_dB,
+      vh_dB: this.currentRegion.sarData.meanVH_dB,
+      polarizationRatio: this.currentRegion.sarData.polarizationRatio,
+      rfdi: this.currentRegion.sarData.rfdi
+    };
+
+    this.aiResult = this.aiEngine.predict(
+      opticalInput,
+      sarInput,
+      this.currentRegion.gediReference,
+      this.currentRegion.areaHectares
+    );
+
+    this.changeResult = this.changeDetector.detect(
+      this.currentRegion,
+      this.currentRegion.opticalData.t1Date,
+      this.currentRegion.opticalData.t2Date
+    );
+
+    if (!this.activeReview || this.activeReview.regionId !== this.currentRegion.id) {
+      this.activeReview = {
+        regionId: this.currentRegion.id,
+        status: this.currentRegion.reviewStatus,
+        reviewerName: this.currentRegion.reviewer,
+        comments: this.currentRegion.reviewNotes,
+        timestamp: new Date().toISOString(),
+        auditHash: await this.reviewManager.computeAuditHash({
+          region: this.currentRegion.id,
+          ai: this.aiResult,
+          change: this.changeResult
+        })
+      };
+    }
+
+    this.updateDashboardMetrics();
+    if (this.mapEngine) {
+      this.mapEngine.loadRegion(this.currentRegion);
+    }
+    this.updateReportPreview();
+
+    if (statusBanner) {
+      statusBanner.innerText = `Pipeline Complete: ${this.currentRegion.name} [Status: ${this.activeReview.status}]`;
+      setTimeout(() => statusBanner.classList.add("hidden"), 3000);
+    }
+  }
+
+  updateDashboardMetrics() {
+    const reg = this.currentRegion;
+    const ai = this.aiResult;
+    const chg = this.changeResult;
+
+    const badgeName = document.getElementById("active-region-name");
+    if (badgeName) badgeName.innerText = reg.name;
+    const badgeBiome = document.getElementById("active-region-biome");
+    if (badgeBiome) badgeBiome.innerText = `${reg.country} · ${reg.biome}`;
+
+    const kpiBio = document.getElementById("kpi-biomass");
+    if (kpiBio) kpiBio.innerText = `${ai.biomassEstimates.p50Median} Mg/ha`;
+    const kpiBioBounds = document.getElementById("kpi-biomass-bounds");
+    if (kpiBioBounds) kpiBioBounds.innerText = `[P10: ${ai.biomassEstimates.p10LowerBound} - P90: ${ai.biomassEstimates.p90UpperBound}] (±${ai.biomassEstimates.uncertaintyMarginPct}%)`;
+
+    const kpiCarbon = document.getElementById("kpi-carbon");
+    if (kpiCarbon) kpiCarbon.innerText = `${(ai.carbonStock.total_tCO2e / 1000000).toFixed(2)}M tCO₂e`;
+    const kpiCarbonTonnes = document.getElementById("kpi-biomass-tonnes");
+    if (kpiCarbonTonnes) kpiCarbonTonnes.innerText = `${(ai.carbonStock.totalBiomassTonnes / 1000).toLocaleString()} kt dry biomass (${reg.areaHectares.toLocaleString()} ha)`;
+
+    const kpiDensity = document.getElementById("kpi-density");
+    if (kpiDensity) kpiDensity.innerText = `${ai.densityProxy.canopyCoverPct}%`;
+    const kpiStems = document.getElementById("kpi-stems");
+    if (kpiStems) kpiStems.innerText = `~${ai.densityProxy.densityProxyStemsHa} stems/ha stand proxy`;
+
+    const kpiLoss = document.getElementById("kpi-forest-loss");
+    if (kpiLoss) kpiLoss.innerText = `${chg.summary.deforestedHectares} ha`;
+    const kpiLossDesc = document.getElementById("kpi-forest-loss-desc");
+    if (kpiLossDesc) kpiLossDesc.innerText = `${chg.summary.degradedHectares} ha degraded · ${chg.summary.totalAlertsCount} alerts flagged`;
+
+    const kpiCloud = document.getElementById("kpi-cloud-gap");
+    if (kpiCloud) kpiCloud.innerText = `${reg.sarData.penetrationEfficiency}%`;
+    const kpiCloudArea = document.getElementById("kpi-cloud-area");
+    if (kpiCloudArea) kpiCloudArea.innerText = `${reg.opticalData.cloudGapAreaHa.toLocaleString()} ha optical gap filled by SAR`;
+
+    const kpiQuality = document.getElementById("kpi-quality-score");
+    if (kpiQuality) kpiQuality.innerText = `${ai.featureWeights.effectiveQualityScore}/100`;
+
+    const statusBadge = document.getElementById("kpi-review-badge");
+    if (statusBadge) {
+      statusBadge.innerText = this.activeReview.status.replace(/_/g, " ");
+      statusBadge.className = `px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider ${
+        this.activeReview.status === 'APPROVED' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' :
+        this.activeReview.status === 'FLAGGED_FOR_INSPECTION' ? 'bg-amber-950 text-amber-300 border border-amber-500/30' :
+        'bg-sky-950 text-sky-300 border border-sky-500/30'
+      }`;
+    }
+
+    const satBanner = document.getElementById("sar-saturation-banner");
+    if (satBanner) {
+      if (ai.limitations.saturationWarning) satBanner.classList.remove("hidden");
+      else satBanner.classList.add("hidden");
+    }
+
+    this.renderAlertsTable();
+    this.updateReviewForm();
+  }
+
+  renderAlertsTable() {
+    const listContainer = document.getElementById("alerts-table-body");
+    if (!listContainer) return;
+    const alerts = this.changeResult?.alertsList || [];
+    if (alerts.length === 0) {
+      listContainer.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">No disturbance alerts detected.</td></tr>`;
+      return;
+    }
+    listContainer.innerHTML = alerts.map(alt => `
+      <tr class="border-b border-slate-800 hover:bg-slate-800/40 text-xs">
+        <td class="py-2.5 px-3 font-mono font-bold text-slate-300">${alt.id}</td>
+        <td class="py-2.5 px-3">
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+            alt.type === 'Deforestation' ? 'bg-red-950 text-red-400 border border-red-800/40' :
+            alt.type === 'Degradation' ? 'bg-amber-950 text-amber-400 border border-amber-800/40' :
+            'bg-cyan-950 text-cyan-400 border border-cyan-800/40'
+          }">${alt.type}</span>
+        </td>
+        <td class="py-2.5 px-3 font-medium text-slate-300">${alt.areaHa} ha</td>
+        <td class="py-2.5 px-3 text-slate-400">${alt.reason}</td>
+        <td class="py-2.5 px-3 font-bold text-right text-emerald-400">${alt.confidence}%</td>
+      </tr>
+    `).join("");
+  }
+
+  updateReviewForm() {
+    const nameInput = document.getElementById("reviewer-name-input");
+    const notesInput = document.getElementById("reviewer-notes-input");
+    const statusSelect = document.getElementById("reviewer-status-select");
+    const hashDisplay = document.getElementById("audit-hash-display");
+
+    if (nameInput) nameInput.value = this.activeReview.reviewerName || "";
+    if (notesInput) notesInput.value = this.activeReview.comments || "";
+    if (statusSelect) statusSelect.value = this.activeReview.status || "APPROVED";
+    if (hashDisplay) hashDisplay.innerText = this.activeReview.auditHash || "";
+  }
+
+  updateReportPreview() {
+    const reportContainer = document.getElementById("evidence-report-view");
+    if (!reportContainer) return;
+    const payload = this.reportExporter.generateReportPayload(
+      this.currentRegion,
+      this.aiResult,
+      this.changeResult,
+      this.activeReview
+    );
+    reportContainer.innerHTML = `
+      <div class="bg-slate-900 border border-slate-700/80 rounded-xl p-6 md:p-8 shadow-2xl font-sans text-slate-200 max-w-4xl mx-auto printable-report">
+        <div class="flex flex-wrap items-center justify-between border-b border-slate-700 pb-5 mb-6 gap-4">
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-2xl">🌲</span>
+              <h2 class="text-2xl font-black text-white">SylvaSense</h2>
+              <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 rounded border border-emerald-500/40 font-mono">ORION-PS-03</span>
+            </div>
+            <p class="text-xs text-slate-400">Forest-Carbon MRV Verification Evidence Report (UNFCCC REDD+ / VVB Standards)</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-mono text-slate-400">REPORT ID: <span class="text-emerald-400 font-bold">${payload.documentMetadata.reportId}</span></div>
+            <div class="text-xs text-slate-400 mt-1">Generated: ${new Date(payload.documentMetadata.generatedAt).toLocaleString()}</div>
+            <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded bg-slate-800 border border-slate-700 text-xs font-mono text-slate-300">
+              <span class="w-2 h-2 rounded-full ${payload.humanReviewSignOff.status === "APPROVED" ? "bg-emerald-500" : "bg-amber-500"}"></span>
+              Audit Hash: ${payload.documentMetadata.cryptographicHash.slice(0, 16)}...
+            </div>
+          </div>
+        </div>
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2 border-l-2 border-emerald-500 pl-2">1. Area of Interest (AOI)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-950/60 p-3.5 rounded border border-slate-800 text-xs">
+            <div><span class="text-slate-500 block">Project Name:</span><b class="text-slate-200">${payload.projectArea.name}</b></div>
+            <div><span class="text-slate-500 block">Biome:</span><b class="text-slate-200">${payload.projectArea.biome}</b></div>
+            <div><span class="text-slate-500 block">Monitored Area:</span><b class="text-emerald-400 font-bold">${payload.projectArea.totalAreaHectares.toLocaleString()} ha</b></div>
+            <div><span class="text-slate-500 block">Centroid:</span><b class="font-mono text-slate-300">${payload.projectArea.coordinates[0].toFixed(4)}, ${payload.projectArea.coordinates[1].toFixed(4)}</b></div>
+          </div>
+        </div>
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2 border-l-2 border-emerald-500 pl-2">2. AI Biomass & Uncertainty Quantification</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-950/80 p-4 rounded border border-emerald-500/30 text-xs">
+            <div><span class="text-slate-400 block mb-1">Median Biomass (P50):</span><span class="text-xl font-black text-emerald-400">${payload.aiBiomassAndDensity.biomassDensity.p50MedianEstimateMgHa}</span><span class="text-slate-400 text-[10px] block">Mg / ha</span></div>
+            <div><span class="text-slate-400 block mb-1">Uncertainty Bounds:</span><span class="text-xs font-mono font-bold text-slate-200">[P10: ${payload.aiBiomassAndDensity.biomassDensity.p10LowerConfidenceMgHa} - P90: ${payload.aiBiomassAndDensity.biomassDensity.p90UpperConfidenceMgHa}]</span><span class="text-slate-400 text-[10px] block">±${payload.aiBiomassAndDensity.biomassDensity.uncertaintyMarginPct}% spread</span></div>
+            <div><span class="text-slate-400 block mb-1">Total Carbon Stock:</span><span class="text-xl font-black text-white">${(payload.aiBiomassAndDensity.carbonStock.totalCarbonStock_tCO2e / 1000000).toFixed(2)}M</span><span class="text-slate-400 text-[10px] block">tCO₂e</span></div>
+            <div><span class="text-slate-400 block mb-1">Canopy Cover:</span><span class="text-xl font-black text-sky-400">${payload.aiBiomassAndDensity.forestStructure.standCanopyCoverPct}%</span><span class="text-slate-400 text-[10px] block">~${payload.aiBiomassAndDensity.forestStructure.estimatedStemDensityProxyStemsHa} stems/ha</span></div>
+          </div>
+        </div>
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2 border-l-2 border-emerald-500 pl-2">3. Bi-Temporal MRV Disturbance Accounting</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-950/60 p-3.5 rounded border border-slate-800 text-xs">
+            <div><span class="text-slate-500 block">Deforestation:</span><b class="text-red-400">${payload.temporalChangeAnalysis.deforestationHa} ha</b></div>
+            <div><span class="text-slate-500 block">Degradation:</span><b class="text-amber-400">${payload.temporalChangeAnalysis.degradationHa} ha</b></div>
+            <div><span class="text-slate-500 block">Stable Canopy:</span><b class="text-emerald-400">${payload.temporalChangeAnalysis.stableForestHa.toLocaleString()} ha</b></div>
+            <div><span class="text-slate-500 block">Net Impact:</span><b class="text-slate-200">${payload.temporalChangeAnalysis.netCarbonEmissions_tCO2e.toLocaleString()} tCO₂e</b></div>
+          </div>
+        </div>
+        <div class="border-t border-slate-700 pt-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2 border-l-2 border-emerald-500 pl-2">4. Human-in-the-Loop Auditor Sign-Off</h3>
+          <div class="bg-slate-950/80 p-4 rounded border border-slate-800 text-xs">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div><span class="font-bold text-slate-200">${payload.humanReviewSignOff.reviewerName}</span> <span class="text-slate-400">(${payload.humanReviewSignOff.organization})</span></div>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase ${payload.humanReviewSignOff.status === "APPROVED" ? "bg-emerald-950 text-emerald-300 border border-emerald-500/40" : "bg-amber-950 text-amber-300 border border-amber-500/40"}">${payload.humanReviewSignOff.status}</span>
+            </div>
+            <p class="text-slate-300 italic mb-2">"${payload.humanReviewSignOff.auditorComments}"</p>
+            <div class="font-mono text-[10px] text-slate-500 break-all bg-slate-900 p-2 rounded">SHA-256: ${payload.humanReviewSignOff.cryptographicProof}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderWorkflowSteps() {
+    const stepsContainer = document.getElementById("workflow-steps-container");
+    if (!stepsContainer) return;
+    const steps = [
+      { num: "01", title: "Region & Period Selection", desc: "User defines AOI via interactive map or selects benchmark sites. Configures baseline (T1) and monitoring (T2) periods.", tech: "Leaflet GIS · GeoJSON" },
+      { num: "02", title: "Imagery Acquisition", desc: "Platform queries and retrieves Copernicus Sentinel-1 C-band SAR and Sentinel-2 optical imagery with NASA GEDI validation data.", tech: "Copernicus API · GEDI L4A/L4B" },
+      { num: "03", title: "Feature Processing & Co-Registration", desc: "Optical reflectance bands preprocessed (NDVI, EVI, NDRE). SAR calibrated to sigma-0, Lee speckle filtered, polarization ratios aligned to 10m grid.", tech: "Rasterio · Lee Speckle Filter" },
+      { num: "04", title: "AI Feature Fusion Estimation", desc: "Dual-branch neural encoder merges optical canopy reflectance and SAR volumetric backscatter into a unified latent feature space to estimate biomass and stand density.", tech: "Dual-Branch CNN / Attention" },
+      { num: "05", title: "Temporal Change Detection", desc: "Pixel-wise and parcel-level differencing across dates. Detects deforestation, forest degradation, stable forest, and regrowth.", tech: "Bi-Temporal Differencing" },
+      { num: "06", title: "Dashboard Review & Split-Screen Inspection", desc: "Interactive visualization with side-by-side Optical vs SAR swipe split, biomass density heatmaps, quantile confidence bands, and alert exploration.", tech: "Split-Screen Leaflet · Heatmaps" },
+      { num: "07", title: "Evidence Export & Audit Sign-Off", desc: "Generates audit-grade MRV verification report in printable PDF and JSON/GeoJSON packages, complete with SHA-256 cryptographic provenance hash.", tech: "Verification-Oriented PDF · JSON" }
+    ];
+    stepsContainer.innerHTML = steps.map(s => `
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 relative overflow-hidden group hover:border-emerald-500/40 transition">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-7 h-7 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold flex items-center justify-center text-xs border border-emerald-500/30">${s.num}</span>
+          <h4 class="text-sm font-bold text-slate-100">${s.title}</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">${s.desc}</p>
+        <div class="text-[10px] font-mono text-emerald-400/80 bg-slate-950/60 px-2.5 py-1 rounded border border-slate-800/60 inline-block">${s.tech}</div>
+      </div>
+    `).join("");
+  }
+
+  renderReferences() {
+    const refContainer = document.getElementById("references-table-body");
+    if (!refContainer) return;
+    refContainer.innerHTML = RESEARCH_REFERENCES.map(ref => `
+      <tr class="border-b border-slate-800 hover:bg-slate-800/40 text-xs">
+        <td class="py-2.5 px-3 font-mono font-bold text-emerald-400">${ref.num}</td>
+        <td class="py-2.5 px-3 font-semibold text-slate-200"><a href="${ref.url}" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-400 transition">${ref.title} ↗</a></td>
+        <td class="py-2.5 px-3 text-slate-400">${ref.organization}</td>
+        <td class="py-2.5 px-3 text-slate-400 leading-relaxed">${ref.summary}</td>
+      </tr>
+    `).join("");
+  }
+
+  updateBusinessCalculator() {
+    const hectaresSlider = document.getElementById("calc-hectares");
+    const reportSlider = document.getElementById("calc-reports");
+    const subRevenueEl = document.getElementById("calc-sub-rev");
+    const reportRevenueEl = document.getElementById("calc-report-rev");
+    const totalRevenueEl = document.getElementById("calc-total-rev");
+    if (!hectaresSlider) return;
+    const hectares = parseInt(hectaresSlider.value, 10);
+    const reports = parseInt(reportSlider?.value || 2, 10);
+    const subRev = Math.round(hectares * 0.25);
+    const reportRev = reports * 1800;
+    const totalRev = subRev + reportRev;
+    const hectaresDisplay = document.getElementById("calc-hectares-display");
+    const reportsDisplay = document.getElementById("calc-reports-display");
+    if (hectaresDisplay) hectaresDisplay.innerText = `${hectares.toLocaleString()} ha`;
+    if (reportsDisplay) reportsDisplay.innerText = `${reports} reports/yr`;
+    if (subRevenueEl) subRevenueEl.innerText = `$${subRev.toLocaleString()}/yr`;
+    if (reportRevenueEl) reportRevenueEl.innerText = `$${reportRev.toLocaleString()}/yr`;
+    if (totalRevenueEl) totalRevenueEl.innerText = `$${totalRev.toLocaleString()}/yr`;
+  }
+
+  bindEvents() {
+    const regionSelect = document.getElementById("region-selector");
+    if (regionSelect) {
+      regionSelect.addEventListener("change", async (e) => {
+        this.currentRegionId = e.target.value;
+        this.currentRegion = BENCHMARK_REGIONS[this.currentRegionId];
+        await this.runPipeline();
+      });
+    }
+
+    const tabButtons = document.querySelectorAll(".nav-tab-btn");
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.getAttribute("data-tab");
+        this.switchTab(targetTab);
+      });
+    });
+
+    const layerButtons = document.querySelectorAll(".map-layer-btn");
+    layerButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        layerButtons.forEach(b => b.classList.remove("active-layer", "bg-emerald-600", "text-white"));
+        btn.classList.add("active-layer", "bg-emerald-600", "text-white");
+        const layer = btn.getAttribute("data-layer");
+        this.mapEngine.setLayer(layer);
+      });
+    });
+
+    const alertToggle = document.getElementById("toggle-alerts-checkbox");
+    if (alertToggle) {
+      alertToggle.addEventListener("change", (e) => {
+        this.mapEngine.toggleAlerts(e.target.checked);
+      });
+    }
+
+    const splitSlider = document.getElementById("split-swipe-slider");
+    if (splitSlider) {
+      splitSlider.addEventListener("input", (e) => {
+        const val = e.target.value;
+        this.splitSliderPos = val;
+        const divider = document.getElementById("split-divider-line");
+        const sarPanel = document.getElementById("split-sar-overlay");
+        if (divider) divider.style.left = `${val}%`;
+        if (sarPanel) sarPanel.style.clipPath = `polygon(0 0, ${val}% 0, ${val}% 100%, 0 100%)`;
+      });
+    }
+
+    const reviewForm = document.getElementById("human-review-form");
+    if (reviewForm) {
+      reviewForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const reviewerName = document.getElementById("reviewer-name-input").value;
+        const notes = document.getElementById("reviewer-notes-input").value;
+        const status = document.getElementById("reviewer-status-select").value;
+        this.activeReview = await this.reviewManager.submitReview({
+          regionId: this.currentRegion.id,
+          reviewerName,
+          comments: notes,
+          status
+        });
+        this.updateDashboardMetrics();
+        this.updateReportPreview();
+        const toast = document.getElementById("review-toast");
+        if (toast) { toast.classList.remove("hidden"); setTimeout(() => toast.classList.add("hidden"), 3000); }
+      });
+    }
+
+    const btnDownloadJson = document.getElementById("btn-download-json");
+    if (btnDownloadJson) {
+      btnDownloadJson.addEventListener("click", () => {
+        const payload = this.reportExporter.generateReportPayload(this.currentRegion, this.aiResult, this.changeResult, this.activeReview);
+        this.reportExporter.downloadJSON(payload);
+      });
+    }
+
+    const btnDownloadGeoJson = document.getElementById("btn-download-geojson");
+    if (btnDownloadGeoJson) {
+      btnDownloadGeoJson.addEventListener("click", () => {
+        this.reportExporter.downloadGeoJSON(this.currentRegion, this.changeResult);
+      });
+    }
+
+    const btnPrintPdf = document.getElementById("btn-print-pdf");
+    if (btnPrintPdf) {
+      btnPrintPdf.addEventListener("click", () => window.print());
+    }
+
+    const calcHa = document.getElementById("calc-hectares");
+    const calcRep = document.getElementById("calc-reports");
+    if (calcHa) calcHa.addEventListener("input", () => this.updateBusinessCalculator());
+    if (calcRep) calcRep.addEventListener("input", () => this.updateBusinessCalculator());
+  }
+
+  switchTab(tabId) {
+    const views = document.querySelectorAll(".tab-view-panel");
+    views.forEach(v => v.classList.add("hidden"));
+    const target = document.getElementById(`view-${tabId}`);
+    if (target) target.classList.remove("hidden");
+    const btns = document.querySelectorAll(".nav-tab-btn");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-tab") === tabId) {
+        btn.classList.add("border-emerald-500", "text-emerald-400", "bg-slate-800/80");
+        btn.classList.remove("border-transparent", "text-slate-400");
+      } else {
+        btn.classList.remove("border-emerald-500", "text-emerald-400", "bg-slate-800/80");
+        btn.classList.add("border-transparent", "text-slate-400");
+      }
+    });
+    if (tabId === "dashboard" && this.mapEngine && this.mapEngine.map) {
+      setTimeout(() => this.mapEngine.map.invalidateSize(), 200);
+    }
+  }
+}
+
+window.sylvaApp = new SylvaSenseApp();
+window.addEventListener("DOMContentLoaded", () => {
+  window.sylvaApp.init();
+});
+</script>
 </body>
 </html>

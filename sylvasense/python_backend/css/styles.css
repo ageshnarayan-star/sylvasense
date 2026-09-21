@@ -147,3 +147,12 @@ code, pre, .font-mono {
     border-color: #d1d5db !important;
   }
 }
+
+
+#map {
+  width: 100% !important;
+  height: 480px !important;
+  min-height: 480px !important;
+  display: block !important;
+  z-index: 10;
+}
